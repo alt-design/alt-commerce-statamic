@@ -1,0 +1,43 @@
+{
+    "name": "alt-design/alt-commerce-statamic",
+    "authors": [
+        {
+            "name": "Alt Design"
+        }
+    ],
+    "support": {
+        "email": "support@alt-desgin.net"
+    },
+    "require": {
+        "league/iso3166": "^4.3",
+        "ext-intl": "*",
+        "statamic/cms": "^5.0",
+        "alt-design/alt-commerce": "@dev"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "AltDesign\\AltCommerceStatamic\\": "src"
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Alt Commerce",
+            "description": "Alt Commerce Statamic addon",
+            "slug": "alt-commerce"
+        },
+        "laravel": {
+            "providers": [
+                "AltDesign\\AltCommerceStatamic\\ServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true
+        }
+    }
+}

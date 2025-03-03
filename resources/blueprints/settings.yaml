@@ -1,0 +1,101 @@
+title: 'Settings'
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: trading_name
+            field:
+              type: text
+              display: 'Trading Name'
+          -
+            handle: supported_currencies
+            field:
+              dictionary: currencies
+              type: dictionary
+              display: 'Supported Currencies'
+          -
+            handle: default_currency
+            field:
+              dictionary: currencies
+              type: dictionary
+              max_items: 1
+              display: 'Default Currency'
+          -
+            handle: default_country
+            field:
+              dictionary:
+                type: countries
+                region: null
+                emojis: true
+              type: dictionary
+              max_items: 1
+              display: 'Default Country'
+      -
+        display: 'Tax'
+        fields:
+          - handle: tax_rules
+            field:
+              type: replicator
+              display: 'Tax Rules'
+              sets:
+                new_set_group:
+                  display: 'New Tax Rule'
+                  sets:
+                    new_set:
+                      display: 'Tax Rule'
+                      fields:
+                        - handle: name
+                          field:
+                            type: text
+                            display: Name
+                            validate:
+                              - required
+                            instructions: 'The name of the rate'
+                        - handle: rates
+                          field:
+                            type: replicator
+                            display: Rates
+                            sets:
+                              new_set_group:
+                                display: 'New Set Group'
+                                sets:
+                                  rate:
+                                    display: Rate
+                                    fields:
+                                      - handle: percentage
+                                        field:
+                                          type: text
+                                          display: Percentage
+                                          validate:
+                                            - required
+                                            - 'min:0'
+                                            - 'max:100'
+                                            - numeric
+                                          width: 25
+                                          instructions: 'The tax rate percentage'
+                                      - handle: country_filter
+                                        field:
+                                          dictionary:
+                                            type: countries
+                                            region: null
+                                            emojis: true
+                                          type: dictionary
+                                          display: 'Country Filter'
+                                          width: 75
+                                          instructions: 'Only apply to the countries specified. Leave blank for all countries.'
+      -
+        display: 'Order Number Generation'
+        fields:
+          - handle: order_number_start_sequence
+            field:
+              default: '00001'
+              type: text
+              display: 'Start sequence'
+          - handle: order_number_prefix
+            field:
+              default: 'alt'
+              type: text
+              display: Prefix
