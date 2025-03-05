@@ -6,6 +6,7 @@ use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use Statamic\Actions\Action;
+use Statamic\Entries\Entry;
 
 abstract class OrderAction extends Action
 {
@@ -39,7 +40,7 @@ abstract class OrderAction extends Action
 
     public function visibleTo($item)
     {
-        if (empty($this->items)) {
+        if (empty($this->items) || ! $item instanceof Entry) {
             return false;
         }
 
