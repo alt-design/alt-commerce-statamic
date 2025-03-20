@@ -8,16 +8,10 @@ class GatewayUrlGenerator
 {
     public function url(string $gateway, string $type, string $id): string
     {
-        $mode = config('alt-commerce.payment_gateways.available.braintree.mode');
-        $merchantId = config('alt-commerce.payment_gateways.available.braintree.merchant_id');
-
-        $url = "https://sandbox.braintreegateway.com/merchants/$merchantId/";
-        $url .= match($type) {
-            'transaction' =>"transactions/{$id}",
-            'subscription' => "subscriptions/{$id}"
+        return match($gateway) {
+            'braintree' => $this->braintreeUrl($type, $id),
+            default => throw new \Exception("Gateway $gateway is not supported")
         };
-
-        return $url;
     }
 
     public function forOrder(StatamicOrder $order): array
@@ -38,5 +32,20 @@ class GatewayUrlGenerator
             ];
         }
         return $gatewayUrls;
+    }
+
+    protected function braintreeUrl(string $type, string $id): string
+    {
+        $mode = config('alt-commerce.payment_gateways.available.braintree.mode');
+        $merchantId = config('alt-commerce.payment_gateways.available.braintree.merchant_id');
+
+        $url = strtolower($mode) === 'sandbox' ?  'https://sandbox.braintreegateway.com' : 'http://braintreegateway.com';
+        $url .= "/merchants/$merchantId/";
+        $url .= match($type) {
+            'transaction' =>"transactions/{$id}",
+            'subscription' => "subscriptions/{$id}"
+        };
+
+        return $url;
     }
 }
