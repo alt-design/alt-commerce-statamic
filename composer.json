@@ -12,8 +12,7 @@
         "league/iso3166": "^4.3",
         "ext-intl": "*",
         "statamic/cms": "^5.0",
-        "alt-design/alt-commerce": "@dev",
-        "stevebauman/location": "^7.3"
+        "alt-design/alt-commerce": "@dev"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0"
