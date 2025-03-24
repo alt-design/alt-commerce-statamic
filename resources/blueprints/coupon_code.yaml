@@ -1,0 +1,109 @@
+title: 'Coupon Code'
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              validate:
+                - required
+              width: 50
+          -
+            handle: code
+            field:
+              type: text
+              display: Code
+              validate:
+                - required
+              width: 50
+          -
+            handle: type
+            field:
+              options:
+                -
+                  key: fixed
+                  value: 'Fixed amount'
+                -
+                  key: percentage
+                  value: Percentage
+              type: button_group
+              display: Type
+              validate:
+                - required
+          -
+            handle: percentage
+            field:
+              type: float
+              display: Percentage
+              validate:
+                - sometimes
+                - 'min:0'
+                - 'max:100'
+              if:
+                type: 'equals percentage'
+          -
+            handle: pricing
+            field:
+              type: multi_currency_pricing
+              display: Pricing
+              if:
+                type: 'equals fixed'
+      -
+        display: Rules
+        fields:
+          -
+            handle: start_date
+            field:
+              input_type: date
+              type: text
+              display: 'Start date'
+              width: 50
+          -
+            handle: end_date
+            field:
+              input_type: date
+              type: text
+              display: 'End date'
+              width: 50
+          -
+            handle: redemption_limit
+            field:
+              type: integer
+              display: 'Redemption limit'
+              width: 33
+          -
+            handle: minimum_spend
+            field:
+              type: float
+              display: 'Minimum spend'
+              width: 33
+          -
+            handle: customer_redemption_limit
+            field:
+              type: integer
+              display: 'Customer limit'
+              width: 33
+          -
+            handle: included_products
+            field:
+              create: false
+              collections:
+                - products
+              type: entries
+              display: 'Included products'
+  sidebar:
+    display: Sidebar
+    sections:
+      -
+        fields:
+          -
+            handle: slug
+            field:
+              type: slug
+              localizable: true
+              validate: 'max:200'

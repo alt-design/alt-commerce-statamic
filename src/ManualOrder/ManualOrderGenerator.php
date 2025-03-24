@@ -11,13 +11,12 @@ use AltDesign\AltCommerce\Commerce\Basket\Basket;
 use AltDesign\AltCommerce\Commerce\Basket\BasketFactory;
 use AltDesign\AltCommerce\Commerce\Customer\Address;
 use AltDesign\AltCommerce\Commerce\Order\Order;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateDiscountItems;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateLineItemDiscounts;
 use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateLineItemSubtotals;
 use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateLineItemTax;
 use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateTaxItems;
 use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateTotals;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\RecalculateBasketPipeline;
+use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasketPipeline;
+use AltDesign\AltCommerce\Commerce\Pipeline\ValidateCouponPipeline;
 use AltDesign\AltCommerce\Contracts\CouponRepository;
 use AltDesign\AltCommerce\Contracts\OrderRepository;
 use AltDesign\AltCommerce\RuleEngine\RuleManager;
@@ -50,8 +49,6 @@ class ManualOrderGenerator
         protected CouponRepository $couponRepository,
         protected RuleManager $ruleManager,
         protected CalculateLineItemSubtotals $calculateLineItemSubtotals,
-        protected CalculateDiscountItems $calculateDiscountItems,
-        protected CalculateLineItemDiscounts $calculateLineItemDiscounts,
         protected CalculateLineItemTax $calculateLineItemTax,
         protected CalculateTaxItems $calculateTaxItems,
         protected CalculateTotals $calculateTotals,
@@ -60,15 +57,14 @@ class ManualOrderGenerator
     {
 
         $this->recalculateBasketAction = new RecalculateBasketAction(
-            recalculateBasketPipeline:  new RecalculateBasketPipeline(
-                basketRepository:  $this->basketRepository,
+            basketRepository: $this->basketRepository,
+            recalculateBasketPipeline:  app(RecalculateBasketPipeline::class),
+        /*new RecalculateBasketPipeline(
                 calculateLineItemSubtotals: $this->calculateLineItemSubtotals,
-                calculateDiscountItems: $this->calculateDiscountItems,
-                calculateLineItemDiscounts: $this->calculateLineItemDiscounts,
                 calculateLineItemTax: $this->calculateLineItemTax,
                 calculateTaxItems: $this->calculateTaxItems,
                 calculateTotals: $this->calculateTotals,
-            )
+            )*/
         );
 
         $this->addToBasketAction = new AddToBasketAction(
@@ -87,7 +83,7 @@ class ManualOrderGenerator
             basketRepository: $this->basketRepository,
             couponRepository: $this->couponRepository,
             recalculateBasketAction: $this->recalculateBasketAction,
-            ruleManager: $this->ruleManager,
+            validateCouponPipeline: app(ValidateCouponPipeline::class),
         );
 
         $this->applyManualDiscountAction = new ApplyManualDiscountAction(

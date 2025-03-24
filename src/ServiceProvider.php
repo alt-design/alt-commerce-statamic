@@ -5,6 +5,7 @@ namespace AltDesign\AltCommerceStatamic;
 
 use AltDesign\AltCommerce\Commerce\Basket\BasketManager;
 use AltDesign\AltCommerce\Commerce\Payment\GatewayBroker;
+use AltDesign\AltCommerce\Commerce\Pipeline\ValidateCouponPipeline;
 use AltDesign\AltCommerce\Contracts\BasketRepository;
 use AltDesign\AltCommerce\Contracts\CouponRepository;
 use AltDesign\AltCommerce\Contracts\OrderFactory;
@@ -14,6 +15,8 @@ use AltDesign\AltCommerce\Contracts\Resolver;
 use AltDesign\AltCommerce\Contracts\Settings;
 use AltDesign\AltCommerce\Contracts\VisitorLocator;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\StatamicCouponRepository;
+use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateCustomerRedemptionLimit;
+use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateRedemptionLimit;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Product\ProductFactory;
@@ -63,9 +66,10 @@ class ServiceProvider extends AddonServiceProvider
         'publicDirectory' => 'resources/dist',
     ];
 
-    /**
-     * Register any application services.
-     */
+    protected $publishables = [
+        __DIR__.'/../resources/blueprints/coupon_code.yaml' => 'resources/blueprints/collections/coupon_codes/coupon_code_1.yaml',
+    ];
+
     public function register(): void
     {
         $this->app->singleton(Settings::class, Support\Settings::class);
@@ -100,6 +104,15 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->tag([
             ApplyCouponRedemption::class,
         ], CreateOrderPipeline::TAG);
+
+
+        ValidateCouponPipeline::register(
+            new ValidateRedemptionLimit(),
+            new ValidateCustomerRedemptionLimit(),
+        );
+
+
+
 
     }
 
