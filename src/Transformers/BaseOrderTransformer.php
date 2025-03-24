@@ -4,6 +4,8 @@ namespace AltDesign\AltCommerceStatamic\Transformers;
 
 use AltDesign\AltCommerce\Commerce\Basket\BillingItem;
 use AltDesign\AltCommerce\Commerce\Basket\CouponDiscountItem;
+use AltDesign\AltCommerce\Commerce\Basket\DiscountItem;
+use AltDesign\AltCommerce\Commerce\Basket\LineDiscount;
 use AltDesign\AltCommerce\Commerce\Basket\LineItem;
 use AltDesign\AltCommerce\Commerce\Basket\TaxItem;
 use AltDesign\AltCommerce\Commerce\Customer\Address;
@@ -91,6 +93,14 @@ class BaseOrderTransformer implements OrderTransformer
                     'product_name' => $lineItem->productName,
                     'quantity' => $lineItem->quantity,
                     'discount_total' => $lineItem->discountTotal,
+                    'discounts' => collect($lineItem->discounts)
+                        ->map(fn(LineDiscount $lineDiscount) => [
+                            'name' => $lineDiscount->name,
+                            'id' => $lineDiscount->id,
+                            'amount' => $lineDiscount->amount,
+                            'discount_item_id' => $lineDiscount->discountItemId,
+                        ])
+                        ->toArray(),
                     'sub_total' => $lineItem->subTotal,
                     'amount' => $lineItem->amount,
                     'tax_total' => $lineItem->taxTotal,
@@ -119,12 +129,13 @@ class BaseOrderTransformer implements OrderTransformer
                     'rate' => $item->rate,
                 ])
                 ->toArray(),
-            'applied_coupons' => collect($order->discountItems)
-                ->filter(fn($item) => $item instanceof CouponDiscountItem)
-                ->map(fn(CouponDiscountItem $discountItem) => [
-                    'name' => $discountItem->name(),
-                    'amount' => $discountItem->amount(),
-                    'code' => $discountItem->coupon()->code(),
+            'discount_items' => collect($order->discountItems)
+                ->map(fn(DiscountItem $item) => [
+                    'name' => $item->name,
+                    'amount' => $item->amount,
+                    'id' => $item->id,
+                    'type' => $item->type->value,
+                    'coupon_code' => $item->couponCode
                 ])
                 ->toArray(),
             'gateway_entities' => $this->buildGatewayEntities($order),

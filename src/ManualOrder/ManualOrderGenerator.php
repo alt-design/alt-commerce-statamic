@@ -59,12 +59,6 @@ class ManualOrderGenerator
         $this->recalculateBasketAction = new RecalculateBasketAction(
             basketRepository: $this->basketRepository,
             recalculateBasketPipeline:  app(RecalculateBasketPipeline::class),
-        /*new RecalculateBasketPipeline(
-                calculateLineItemSubtotals: $this->calculateLineItemSubtotals,
-                calculateLineItemTax: $this->calculateLineItemTax,
-                calculateTaxItems: $this->calculateTaxItems,
-                calculateTotals: $this->calculateTotals,
-            )*/
         );
 
         $this->addToBasketAction = new AddToBasketAction(

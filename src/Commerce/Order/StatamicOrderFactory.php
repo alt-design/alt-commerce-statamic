@@ -4,7 +4,8 @@ namespace AltDesign\AltCommerceStatamic\Commerce\Order;
 
 use AltDesign\AltCommerce\Commerce\Basket\Basket;
 use AltDesign\AltCommerce\Commerce\Basket\BillingItem;
-use AltDesign\AltCommerce\Commerce\Basket\CouponDiscountItem;
+use AltDesign\AltCommerce\Commerce\Basket\DiscountItem;
+use AltDesign\AltCommerce\Commerce\Basket\LineDiscount;
 use AltDesign\AltCommerce\Commerce\Basket\LineItem;
 use AltDesign\AltCommerce\Commerce\Basket\TaxItem;
 use AltDesign\AltCommerce\Commerce\Customer\Address;
@@ -13,6 +14,7 @@ use AltDesign\AltCommerce\Commerce\Billing\Subscription;
 use AltDesign\AltCommerce\Contracts\CouponRepository;
 use AltDesign\AltCommerce\Contracts\Customer;
 use AltDesign\AltCommerce\Contracts\OrderFactory;
+use AltDesign\AltCommerce\Enum\DiscountType;
 use AltDesign\AltCommerce\Enum\DurationUnit;
 use AltDesign\AltCommerce\Enum\OrderStatus;
 use AltDesign\AltCommerce\Enum\TransactionStatus;
@@ -116,12 +118,24 @@ class StatamicOrderFactory implements OrderFactory
 
         $lineItems = [];
         foreach ($entry->get('line_items') ?? [] as $lineItem) {
+
+            $discounts = [];
+            foreach ($lineItem['discounts'] ?? [] as $discount) {
+                $discounts[] = new LineDiscount(
+                    id: $discount['id'],
+                    discountItemId: $discount['discount_item_id'],
+                    name: $discount['name'],
+                    amount: $discount['amount'],
+                );
+            }
+
             $lineItems[] = new LineItem(
                 id: $lineItem['id'],
                 productId: $lineItem['product_id'],
                 productName: $lineItem['product_name'],
                 amount: $lineItem['amount'],
                 quantity: $lineItem['quantity'],
+                discounts: $discounts,
                 discountTotal: $lineItem['discount_total'],
                 subTotal: $lineItem['sub_total'],
                 taxTotal: $lineItem['tax_total'],
@@ -157,11 +171,13 @@ class StatamicOrderFactory implements OrderFactory
         }
 
         $discountItems = [];
-        foreach ($entry->get('applied_coupons') ?? [] as $coupon) {
-            $discountItems[] = new CouponDiscountItem(
-                name: $coupon['name'],
-                amount: $coupon['amount'],
-                coupon: $this->couponRepository->find($entry->get('currency'), $coupon['code'])
+        foreach ($entry->get('discount_items') ?? [] as $item) {
+            $discountItems[] = new DiscountItem(
+                id: $item['id'],
+                name: $item['name'],
+                amount: $item['amount'],
+                type: DiscountType::from($item['type']),
+                couponCode: $item['coupon_code'] ?? null,
             );
         }
 
