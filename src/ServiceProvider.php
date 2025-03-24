@@ -35,9 +35,11 @@ use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\ApplyCouponRedemption;
 use AltDesign\AltCommerceStatamic\Tags\Order;
 use AltDesign\AltCommerceStatamic\Tags\Price;
 use AltDesign\AltCommerceStatamic\Transformers\BaseOrderTransformer;
+use Illuminate\Support\Facades\File;
 use Statamic\Facades\CP\Nav;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Stache\Stache;
+use Statamic\Statamic;
 
 
 class ServiceProvider extends AddonServiceProvider
@@ -66,8 +68,11 @@ class ServiceProvider extends AddonServiceProvider
         'publicDirectory' => 'resources/dist',
     ];
 
-    protected $publishables = [
-        __DIR__.'/../resources/blueprints/coupon_code.yaml' => 'resources/blueprints/collections/coupon_codes/coupon_code_1.yaml',
+    protected array $filesToPublish = [
+        __DIR__.'/../resources/blueprints/coupon_code.yaml' => 'resources/blueprints/collections/coupon_codes/coupon_code.yaml',
+        __DIR__.'/../resources/blueprints/coupon_redemption.yaml' => 'resources/blueprints/collections/coupon_redemption/coupon_redemptions.yaml',
+        __DIR__.'/../resources/collections/coupon_codes.yaml' => 'content/collections/coupon_codes.yaml',
+        __DIR__.'/../resources/collections/coupon_redemptions.yaml' => 'content/collections/coupon_redemptions.yaml',
     ];
 
     public function register(): void
@@ -110,10 +115,6 @@ class ServiceProvider extends AddonServiceProvider
             new ValidateRedemptionLimit(),
             new ValidateCustomerRedemptionLimit(),
         );
-
-
-
-
     }
 
     public function bootAddon(): void
@@ -136,5 +137,14 @@ class ServiceProvider extends AddonServiceProvider
         AddOrderNote::register();
         DeleteOrderNote::register();
         UpdateOrderStatusToRefunded::register();
+
+        Statamic::afterInstalled(function () {
+            foreach ($this->filesToPublish as $source => $target) {
+                if (File::exists($source)) {
+                    File::ensureDirectoryExists(dirname($target));
+                    File::copy($source, $target);
+                }
+            }
+        });
     }
 }

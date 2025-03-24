@@ -1,0 +1,42 @@
+hide: true
+title: 'Coupon Redemption'
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              validate:
+                - required
+          -
+            handle: code
+            field:
+              type: text
+              display: Code
+          -
+            handle: currency
+            field:
+              type: text
+              display: Currency
+              width: 33
+          -
+            handle: amount
+            field:
+              type: float
+              display: 'Discount Amount'
+              width: 66
+          -
+            handle: customer_email
+            field:
+              type: text
+              display: 'Customer Email'
+          -
+            handle: order_id
+            field:
+              type: text
+              display: 'Order ID'
