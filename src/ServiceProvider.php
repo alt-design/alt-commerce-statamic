@@ -70,7 +70,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected array $filesToPublish = [
         __DIR__.'/../resources/blueprints/coupon_code.yaml' => 'resources/blueprints/collections/coupon_codes/coupon_code.yaml',
-        __DIR__.'/../resources/blueprints/coupon_redemption.yaml' => 'resources/blueprints/collections/coupon_redemption/coupon_redemptions.yaml',
+        __DIR__.'/../resources/blueprints/coupon_redemption.yaml' => 'resources/blueprints/collections/coupon_redemptions/coupon_redemption.yaml',
         __DIR__.'/../resources/collections/coupon_codes.yaml' => 'content/collections/coupon_codes.yaml',
         __DIR__.'/../resources/collections/coupon_redemptions.yaml' => 'content/collections/coupon_redemptions.yaml',
     ];

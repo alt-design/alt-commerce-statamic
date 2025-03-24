@@ -25,9 +25,9 @@ class StatamicCouponFactory
             endDate: $endDate,
             discountAmount: $discountAmount,
             isPercentage: true,
-            eligibleProducts: $entry->get('included_products'),
-            redemptionLimit: $entry->get('redemption_limit'),
-            customerRedemptionLimit: $entry->get('customer_redemption_limit'),
+            eligibleProducts: $entry->get('included_products') ?? [],
+            redemptionLimit: $entry->get('redemption_limit') ?? 0,
+            customerRedemptionLimit: $entry->get('customer_redemption_limit') ?? 0,
         );
 
     }

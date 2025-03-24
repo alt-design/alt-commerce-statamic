@@ -96,3 +96,6 @@ tabs:
                 - products
               type: entries
               display: 'Included products'
+              validate:
+                - required
+                - 'min:1'
