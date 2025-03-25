@@ -218,9 +218,15 @@ class ManualOrderGenerator
             return $customer;
         }
 
-        return ($class::query())->create([
+        $customer = ($class::query())->create([
             'email' => $validated['customer_email'],
             'name' => $validated['customer_name'],
         ]);
+
+        $customer->roles()->create([
+            'role_id' => 'guest'
+        ]);
+
+        return $customer;
     }
 }
