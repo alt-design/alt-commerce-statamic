@@ -6,12 +6,14 @@ namespace AltDesign\AltCommerceStatamic\OrderProcessor\Tasks;
 use AltDesign\AltCommerce\Commerce\Order\Order;
 use AltDesign\AltCommerce\Enum\DiscountType;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Statamic\Facades\Entry;
 
 
 class ApplyCouponRedemption implements ShouldQueue
 {
+    use Queueable;
 
     public function __construct(protected string $orderId)
     {

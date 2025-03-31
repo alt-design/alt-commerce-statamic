@@ -5,6 +5,7 @@ namespace AltDesign\AltCommerceStatamic\OrderProcessor;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\DispatchNextStage;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\LogCompletedPipeline;
 use Illuminate\Container\Container;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Arr;
@@ -24,7 +25,7 @@ class OrderProcessor
 
     }
 
-    public function process(StatamicOrder $order, string $profile = 'default', string $stage = null): void
+    public function process(StatamicOrder $order, string $profile = 'default', string $stage = null, string $connection = null, string $mode = null): void
     {
 
         $config = config('alt-commerce.order-pipelines.' . $profile, []);
@@ -32,36 +33,46 @@ class OrderProcessor
             throw new \Exception('No order pipeline found for profile: ' . $profile);
         }
 
-        $stage = $stage ?? Arr::first(array_keys($config));
-        $pipeline = $config[$stage] ?? throw new \Exception("Stage '$stage' does not exist in profile '$profile'");
+        $stageName = $stage ?? Arr::first(array_keys($config['stages']));
+        $stage = $config['stages'][$stageName] ?? throw new \Exception("Stage '$stageName' does not exist in profile '$profile'");
 
-        $this->runPipeline(
+        $this->runStage(
             order: $order,
-            pipeline: $pipeline,
+            tasks: $stage['tasks'] ?? [],
+            condition: $connection ?? $stage['condition'] ?? null,
+            stage: $stageName,
             profile: $profile,
-            stage: $stage,
-            nextStage: $this->determineNextStage($config, $stage)
+            nextStage: $this->determineNextStage($config, $stageName),
+            connection: $stage['connection'] ?? 'default',
+            queue: $stage['queue'] ?? 'default',
+            mode: $mode ?? $config['mode'] ?? 'manual',
         );
-
     }
 
-    protected function runPipeline(StatamicOrder $order, array $pipeline, string $profile, string $stage, string|null $nextStage): void
+    protected function runStage(
+        StatamicOrder $order,
+        array $tasks,
+        string|null $condition,
+        string $stage,
+        string $profile,
+        string|null $nextStage,
+        string $connection,
+        string $queue,
+        string $mode,
+    ): void
     {
         $this->info($order, "Running stage '$stage' on pipeline '$profile'");
 
-        if (!$this->checkCondition($order, $pipeline)) {
+        if (!$this->checkCondition($order, $condition)) {
             $this->finished($order);
             return;
         }
 
-        if (empty($pipeline['tasks'])) {
+        if (empty($tasks)) {
             $this->info($order, 'Pipeline has no tasks defined.');
             $this->finished($order);
             return;
         }
-
-        $connection = $pipeline['connection'] ?? 'default';
-        $queue = $pipeline['queue'] ?? 'default';
 
         $this->info($order, "Dispatching jobs to queue '$queue' using connection '$connection'");
 
@@ -70,10 +81,10 @@ class OrderProcessor
             'logger' => $this->logger
         ];
 
-        $tasks = collect($pipeline['tasks'])->map(fn($task) => $this->container->makeWith($task, $args))->toArray();
+        $tasks = collect($tasks)->map(fn($task) => $this->container->makeWith($task, $args))->toArray();
 
         // Add a task to run the processor again on the order
-        if ($nextStage) {
+        if ($nextStage && ($mode === 'sequential')) {
             $this->info($order, "Configuring next stage to be '$nextStage'");
 
             $tasks[] = new DispatchNextStage(
@@ -88,16 +99,14 @@ class OrderProcessor
             ->onQueue($queue)
             ->dispatch();
 
-
-        $this->finished($order);
     }
 
-    protected function checkCondition(StatamicOrder $order, array $pipeline): bool
+    protected function checkCondition(StatamicOrder $order, string|null $condition): bool
     {
 
-        if (!empty($pipeline['condition'])) {
-            $result = $this->container->make($pipeline['condition'])->validate($order);
-            $this->info($order, 'Checking pipeline condition using '. $pipeline['condition']);
+        if (!empty($condition)) {
+            $result = $this->container->make($condition)->validate($order);
+            $this->info($order, 'Checking pipeline condition using '. $condition);
             $this->info($order, $result ? 'Condition passed' : 'Condition failed');
             return $result;
         }
@@ -108,7 +117,7 @@ class OrderProcessor
 
     protected function determineNextStage(array $pipeline, string $current): string|null
     {
-        $keys = array_keys($pipeline);
+        $keys = array_keys($pipeline['stages']);
         $index = array_search($current, $keys);
 
         if ($index !== false && isset($keys[$index + 1])) {

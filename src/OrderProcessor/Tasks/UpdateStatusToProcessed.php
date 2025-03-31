@@ -4,10 +4,13 @@ namespace AltDesign\AltCommerceStatamic\OrderProcessor\Tasks;
 
 use AltDesign\AltCommerce\Enum\OrderStatus;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;;
 
-class UpdateStatusToProcessed implements ShouldQueue
+class UpdateStatusToProcessed  implements ShouldQueue
 {
+    use Queueable;
+
     public function __construct(protected string $orderId)
     {
 

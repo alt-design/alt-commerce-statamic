@@ -30,8 +30,6 @@ use AltDesign\AltCommerceStatamic\CP\Actions\DeleteOrderNote;
 use AltDesign\AltCommerceStatamic\CP\Actions\UpdateOrderStatusToRefunded;
 use AltDesign\AltCommerceStatamic\Fieldtypes\MultiCurrencyPricing;
 use AltDesign\AltCommerceStatamic\Fieldtypes\TaxRateSelector;
-use AltDesign\AltCommerceStatamic\OrderProcessor\Pipelines\CreateOrderPipeline;
-use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\ApplyCouponRedemption;
 use AltDesign\AltCommerceStatamic\Tags\Order;
 use AltDesign\AltCommerceStatamic\Tags\Price;
 use AltDesign\AltCommerceStatamic\Transformers\BaseOrderTransformer;
@@ -105,11 +103,6 @@ class ServiceProvider extends AddonServiceProvider
                 factory: $app->make(ProductFactory::class)
             )
         );
-
-        $this->app->tag([
-            ApplyCouponRedemption::class,
-        ], CreateOrderPipeline::TAG);
-
 
         ValidateCouponPipeline::register(
             new ValidateRedemptionLimit(),

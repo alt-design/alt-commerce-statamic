@@ -32,32 +32,35 @@ return [
     ],
     'customer' => \App\Models\User::class,
 
-    'order_pipelines' => [
+    'order-pipelines' => [
 
         'default' => [
-            'create' => [
-                'connection' => 'sync',
-                'condition' => OrderIsDraft::class,
-                'tasks' => [
-                    ApplyCouponRedemption::class,
-                    UpdateStatusToProcessing::class,
-                ]
-            ],
-            'process' => [
-                'connection' => 'default',
-                'queue' => 'process-order',
-                'condition' => OrderIsProcessing::class,
-                'tasks' => [
-                    UpdateStatusToProcessed::class,
-                ]
-            ],
-            'complete' => [
-                'connection' => 'default',
-                'queue' => 'complete-order',
-                'condition' => OrderIsProcessed::class,
-                'tasks' => [
-                    UpdateStatusToComplete::class,
+            'mode' => 'sequential',
+            'stages' => [
+                'create' => [
+                    'connection' => 'sync',
+                    'condition' => OrderIsDraft::class,
+                    'tasks' => [
+                        ApplyCouponRedemption::class,
+                        UpdateStatusToProcessing::class,
+                    ]
                 ],
+                'process' => [
+                    'connection' => 'default',
+                    'queue' => 'process-order',
+                    'condition' => OrderIsProcessing::class,
+                    'tasks' => [
+                        UpdateStatusToProcessed::class,
+                    ]
+                ],
+                'complete' => [
+                    'connection' => 'default',
+                    'queue' => 'complete-order',
+                    'condition' => OrderIsProcessed::class,
+                    'tasks' => [
+                        UpdateStatusToComplete::class,
+                    ],
+                ]
             ]
         ],
     ]

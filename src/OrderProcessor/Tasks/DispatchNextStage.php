@@ -4,10 +4,13 @@ namespace AltDesign\AltCommerceStatamic\OrderProcessor\Tasks;
 
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use AltDesign\AltCommerceStatamic\OrderProcessor\OrderProcessor;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 class DispatchNextStage implements ShouldQueue
 {
+    use Queueable;
+
     public function __construct(
         protected string $orderId,
         protected string $profile,
