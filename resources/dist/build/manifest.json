@@ -5,14 +5,14 @@
     "src": "resources/css/addon.css"
   },
   "resources/js/addon.css": {
-    "file": "assets/addon-e93cf2c5.css",
+    "file": "assets/addon-600dcd07.css",
     "src": "resources/js/addon.css"
   },
   "resources/js/addon.js": {
     "css": [
-      "assets/addon-e93cf2c5.css"
+      "assets/addon-600dcd07.css"
     ],
-    "file": "assets/addon-8a188203.js",
+    "file": "assets/addon-54d36b59.js",
     "isEntry": true,
     "src": "resources/js/addon.js"
   }

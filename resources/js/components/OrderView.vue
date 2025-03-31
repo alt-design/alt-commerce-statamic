@@ -78,7 +78,7 @@ export default {
                     const index = this.order.notes.findIndex(n => n.id === action.id)
                     if (index !== -1) {
                         this.order.notes.splice(index, 1)
-                    }g
+                    }
                 }
 
                 if (action.type === 'status-updated') {

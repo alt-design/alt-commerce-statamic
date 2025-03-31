@@ -89,11 +89,11 @@ export default {
     }
 
     :deep p {
-        @apply py-1
+        @apply py-1;
     }
 
     .author {
-        @apply flex gap-x-2 text-sm items-baseline
+        @apply flex gap-x-2 text-sm items-baseline;
     }
 
 }

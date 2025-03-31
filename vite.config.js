@@ -16,7 +16,7 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            'statamic': path.resolve(__dirname, '../../vendor/statamic/cms/resources/js'),
+            'statamic': path.resolve(__dirname, 'vendor/statamic/cms/resources/js'),
         },
     },
 });
