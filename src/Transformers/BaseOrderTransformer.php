@@ -3,7 +3,6 @@
 namespace AltDesign\AltCommerceStatamic\Transformers;
 
 use AltDesign\AltCommerce\Commerce\Basket\BillingItem;
-use AltDesign\AltCommerce\Commerce\Basket\CouponDiscountItem;
 use AltDesign\AltCommerce\Commerce\Basket\DiscountItem;
 use AltDesign\AltCommerce\Commerce\Basket\LineDiscount;
 use AltDesign\AltCommerce\Commerce\Basket\LineItem;

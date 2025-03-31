@@ -19,10 +19,13 @@ use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasketPipeline;
 use AltDesign\AltCommerce\Commerce\Pipeline\ValidateCouponPipeline;
 use AltDesign\AltCommerce\Contracts\CouponRepository;
 use AltDesign\AltCommerce\Contracts\OrderRepository;
+use AltDesign\AltCommerce\Exceptions\BasketException;
+use AltDesign\AltCommerce\Exceptions\CouponNotValidException;
+use AltDesign\AltCommerce\Exceptions\CurrencyNotSupportedException;
+use AltDesign\AltCommerce\Exceptions\ProductNotFoundException;
 use AltDesign\AltCommerce\RuleEngine\RuleManager;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Product\StatamicProductRepository;
-use AltDesign\AltCommerceStatamic\OrderProcessor\Pipelines\CreateOrderPipeline;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -87,6 +90,12 @@ class ManualOrderGenerator
     }
 
 
+    /**
+     * @throws BasketException
+     * @throws CouponNotValidException
+     * @throws ProductNotFoundException
+     * @throws CurrencyNotSupportedException
+     */
     public function createBasketFromRequest(Request $request): Basket
     {
         $validated = $request->validate([
@@ -128,6 +137,13 @@ class ManualOrderGenerator
         return $basket;
     }
 
+    /**
+     * @throws BasketException
+     * @throws CouponNotValidException
+     * @throws CurrencyNotSupportedException
+     * @throws ProductNotFoundException
+     * @throws ValidationException
+     */
     public function createOrderFromRequest(Request $request): Order
     {
 
@@ -161,7 +177,7 @@ class ManualOrderGenerator
 
             $validated = $validator->validated();
             $orderDate = !empty($validated['order_date']['date']) ? Carbon::parse($validated['order_date']['date']) : now();
-            $order = $this->createOrderAction->handle(
+            return $this->createOrderAction->handle(
                 customer: $this->getCustomer($validated),
                 additional: [
                     'billing_address' => new Address(
@@ -173,7 +189,6 @@ class ManualOrderGenerator
                          locality: $validated['billing_locality'] ?? null,
                          street: $validated['billing_street'] ?? null,
                          phoneNumber: $validated['billing_phone_number'] ?? null,
-
                     ),
                     'payment_method' => 'manual',
                     'payment_gateway' => 'manual',
@@ -183,10 +198,6 @@ class ManualOrderGenerator
                 ],
                 orderDate: $orderDate->toDateTimeImmutable(),
             );
-
-            CreateOrderPipeline::dispatchSync($order->orderNumber);
-
-            return $order;
 
         } catch (ValidationException $e) {
             $errors->merge($e->errors());

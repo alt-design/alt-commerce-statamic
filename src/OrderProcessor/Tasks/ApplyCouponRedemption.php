@@ -2,8 +2,9 @@
 
 namespace AltDesign\AltCommerceStatamic\OrderProcessor\Tasks;
 
-use AltDesign\AltCommerce\Commerce\Basket\CouponDiscountItem;
+
 use AltDesign\AltCommerce\Commerce\Order\Order;
+use AltDesign\AltCommerce\Enum\DiscountType;
 use Statamic\Facades\Entry;
 
 
@@ -19,10 +20,10 @@ class ApplyCouponRedemption
             Entry::make()
                 ->collection('coupon_redemptions')
                 ->data([
-                    'title' => $discountItem->name(),
-                    'code' => $discountItem->coupon()->code(),
-                    'amount' => $discountItem->amount() / 100,
-                    'currency' => $discountItem->coupon()->currency(),
+                    'title' => $discountItem->name,
+                    'code' => $discountItem->couponCode,
+                    'amount' => $discountItem->amount,
+                    'currency' => $order->currency,
                     'customer_id' => $order->customer->customerId(),
                     'customer_email' => $order->customer->customerEmail(),
                     'order_id' => $order->id,

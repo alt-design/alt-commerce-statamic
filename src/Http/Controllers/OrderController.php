@@ -211,7 +211,7 @@ class OrderController
                 'id' => $order->id
             ];
 
-        } catch (CouponNotFoundException|CouponNotValidException $e) {
+        } catch (CouponNotValidException) {
             throw ValidationException::withMessages([
                 'discount_code' => ['Invalid discount code']
             ]);

@@ -23,4 +23,26 @@ return [
         ]
     ],
     'customer' => \App\Models\User::class,
+
+    'order_pipelines' => [
+
+        'default' => [
+            'create' => [
+                'connection' => 'sync',
+                'tasks' => [
+                    \AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\ApplyCouponRedemption::class,
+                ]
+            ],
+            'process' => [
+                'connection' => 'default',
+                'queue' => 'process-order',
+                'tasks' => []
+            ],
+            'complete' => [
+                'connection' => 'default',
+                'queue' => 'complete-order',
+                'tasks' => [],
+            ]
+        ],
+    ]
 ];
