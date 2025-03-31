@@ -5,15 +5,25 @@ namespace AltDesign\AltCommerceStatamic\OrderProcessor\Tasks;
 
 use AltDesign\AltCommerce\Commerce\Order\Order;
 use AltDesign\AltCommerce\Enum\DiscountType;
+use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Statamic\Facades\Entry;
 
 
-class ApplyCouponRedemption
+class ApplyCouponRedemption implements ShouldQueue
 {
-    public function handle(Order $order, $next)
+
+    public function __construct(protected string $orderId)
     {
+
+    }
+
+    public function handle(StatamicOrderRepository $orderRepository): void
+    {
+        $order = $orderRepository->find($this->orderId);
+
         foreach ($order->discountItems as $discountItem) {
-            if (! $discountItem instanceof CouponDiscountItem) {
+            if ($discountItem->type !== DiscountType::PRODUCT_COUPON) {
                 continue;
             }
 
@@ -30,6 +40,5 @@ class ApplyCouponRedemption
                 ])
                 ->save();
         }
-        return $next($order);
     }
 }

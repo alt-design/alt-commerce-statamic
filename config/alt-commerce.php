@@ -1,5 +1,13 @@
 <?php
 
+use AltDesign\AltCommerceStatamic\OrderProcessor\Conditions\OrderIsDraft;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Conditions\OrderIsProcessed;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Conditions\OrderIsProcessing;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\ApplyCouponRedemption;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\UpdateStatusToComplete;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\UpdateStatusToProcessed;
+use AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\UpdateStatusToProcessing;
+
 return [
 
     'payment_gateways' => [
@@ -29,19 +37,27 @@ return [
         'default' => [
             'create' => [
                 'connection' => 'sync',
+                'condition' => OrderIsDraft::class,
                 'tasks' => [
-                    \AltDesign\AltCommerceStatamic\OrderProcessor\Tasks\ApplyCouponRedemption::class,
+                    ApplyCouponRedemption::class,
+                    UpdateStatusToProcessing::class,
                 ]
             ],
             'process' => [
                 'connection' => 'default',
                 'queue' => 'process-order',
-                'tasks' => []
+                'condition' => OrderIsProcessing::class,
+                'tasks' => [
+                    UpdateStatusToProcessed::class,
+                ]
             ],
             'complete' => [
                 'connection' => 'default',
                 'queue' => 'complete-order',
-                'tasks' => [],
+                'condition' => OrderIsProcessed::class,
+                'tasks' => [
+                    UpdateStatusToComplete::class,
+                ],
             ]
         ],
     ]
