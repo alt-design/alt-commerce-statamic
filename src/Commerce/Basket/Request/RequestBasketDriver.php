@@ -9,23 +9,25 @@ use AltDesign\AltCommerce\Contracts\BasketDriver;
 class RequestBasketDriver implements BasketDriver
 {
 
+    protected Basket $basket;
+
     public function __construct(protected BasketFactory $basketFactory)
     {
-
+        $this->basket = $this->basketFactory->create();
     }
 
     public function save(Basket $basket): void
     {
-        // do nothing
+        $this->basket = $basket;
     }
 
     public function delete(): void
     {
-        // do nothing
+        $this->basket = $this->basketFactory->create();
     }
 
     public function get(): Basket
     {
-        return $this->basketFactory->create();
+        return $this->basket;
     }
 }

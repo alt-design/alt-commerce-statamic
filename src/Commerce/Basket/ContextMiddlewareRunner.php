@@ -15,7 +15,7 @@ class ContextMiddlewareRunner
     public function run(): void
     {
         Pipeline::send($this->context)
-            ->through($this->config['middlewares'])
+            ->through($this->config['middleware'])
             ->thenReturn();
     }
 }
