@@ -3,6 +3,7 @@
 namespace AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware;
 
 use AltDesign\AltCommerce\Commerce\Basket\BasketContext;
+use League\ISO3166\ISO3166;
 
 class SetCountryCode
 {
@@ -13,7 +14,8 @@ class SetCountryCode
             'billing_country_code' => 'required|string',
         ]);
 
-        $context->updateBasketCountry($validated['billing_country_code']);
+        $countryCode = (new ISO3166)->alpha3($validated['billing_country_code'])['alpha2'];
+        $context->updateBasketCountry($countryCode);
         return $next($context);
     }
 }
