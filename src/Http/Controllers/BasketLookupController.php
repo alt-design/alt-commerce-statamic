@@ -6,11 +6,6 @@ use AltDesign\AltCommerceStatamic\Facades\Basket;
 
 class BasketLookupController
 {
-
-    public function __construct()
-    {
-    }
-
     public function __invoke()
     {
         $basket = Basket::context('manual-order')->current();

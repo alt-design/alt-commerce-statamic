@@ -2,12 +2,16 @@
 
 namespace AltDesign\AltCommerceStatamic\Http\Controllers;
 
-use AltDesign\AltCommerce\Exceptions\CouponNotValidException;
+use AltDesign\AltCommerce\Commerce\Customer\Address;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
-use AltDesign\AltCommerceStatamic\ManualOrder\ManualOrderGenerator;
+use AltDesign\AltCommerceStatamic\Facades\Basket;
 use AltDesign\AltCommerceStatamic\Support\GatewayUrlGenerator;
 use AltDesign\AltCommerceStatamic\Support\Settings;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
 use League\ISO3166\ISO3166;
 use Statamic\Facades\Action;
@@ -27,8 +31,7 @@ class OrderController
     public function __construct(
         protected StatamicOrderRepository $orderRepository,
         protected GatewayUrlGenerator     $gatewayUrlGenerator,
-        protected Settings                $settings,
-        protected ManualOrderGenerator    $manualOrderService,
+        protected Settings                $settings
     )
     {
         $this->collection = Collection::find('orders');
@@ -204,17 +207,68 @@ class OrderController
 
     public function store()
     {
-        try {
-            $order = $this->manualOrderService->createOrderFromRequest(request());
-            return [
-                'id' => $order->id
-            ];
+        $validator = Validator::make(request()->all(), [
+            'order_date' => 'nullable|array',
+            'order_date.date' => 'nullable|date',
+            'order_date.time' => 'nullable|date_format:H:i',
+            'customer' => 'nullable|array',
+            'customer_email' => 'required|email',
+            'customer_name' => 'required|string',
+            'billing_company' => 'nullable|string',
+            'billing_name' => 'nullable|string',
+            'billing_phone_number' => 'nullable|string',
+            'billing_street' => 'nullable|string',
+            'billing_locality' => 'nullable|string',
+            'billing_region' => 'nullable|string',
+            'billing_postal_code' => 'nullable|string',
+            'billing_country_code' => 'required|string',
+        ]);
 
-        } catch (CouponNotValidException) {
-            throw ValidationException::withMessages([
-                'discount_code' => ['Invalid discount code']
-            ]);
+        $additionalBlueprint = Blueprint::find('alt-commerce::additional_order_fields');
+
+        $additionalDataValidator = Validator::make(request()->all(), $additionalBlueprint->fields()->validator()->rules());
+
+        $errors = new MessageBag();
+        try {
+
+            $errors->merge($validator->errors()->toArray());
+            $errors->merge($additionalDataValidator->errors()->toArray());
+
+            $validated = $validator->validated();
+            $orderDate = !empty($validated['order_date']['date']) ? Carbon::parse($validated['order_date']['date']) : now();
+
+            return Basket::context('manual-order-generation')->createOrder(
+                customer: $this->getCustomer($validated),
+                additional: [
+                    'billing_address' => new Address(
+                        company: $validated['billing_company'] ?? null,
+                        fullName: $validated['billing_name'] ?? null,
+                        countryCode: (new ISO3166())->alpha3($validated['billing_country_code'])['alpha2'],
+                        postalCode: $validated['billing_postal_code'] ?? null,
+                        region: $validated['billing_region'] ?? null,
+                        locality: $validated['billing_locality'] ?? null,
+                        street: $validated['billing_street'] ?? null,
+                        phoneNumber: $validated['billing_phone_number'] ?? null,
+                    ),
+                    'payment_method' => 'manual',
+                    'payment_gateway' => 'manual',
+                    'payment_gateway_id' => '',
+
+                    ...$additionalDataValidator->validated()
+                ],
+                orderDate: $orderDate->toDateTimeImmutable()
+            );
+
+        } catch (ValidationException $e) {
+            $errors->merge($e->errors());
+        } finally {
+
+            if ($errors->isNotEmpty()) {
+                throw ValidationException::withMessages($errors->toArray());
+            }
         }
+
+
     }
 
     public function show(string $orderId)
@@ -255,4 +309,36 @@ class OrderController
         ];
     }
 
+    protected function getCustomer(array $validated)
+    {
+        // todo need a bit of thought here about how best to implement a customer repository
+        // majority of the time, this will be related to users of an application
+        // will need a way of retrieving / saving which is a little more abstracted rather than relying on an eloquent model.
+
+        $class = \App\Models\User::class;
+
+        if (!class_implements($class, Model::class)) {
+            throw new \Exception('Customer class must implement Illuminate\Database\Eloquent\Model');
+        }
+
+
+        if (!empty($validated['customer'][0])) {
+            return ($class::query())->find($validated['customer'][0]);
+        }
+
+        if ($customer = ($class::query())->where('email', $validated['customer_email'])->first()) {
+            return $customer;
+        }
+
+        $customer = ($class::query())->create([
+            'email' => $validated['customer_email'],
+            'name' => $validated['customer_name'],
+        ]);
+
+        $customer->roles()->create([
+            'role_id' => 'guest'
+        ]);
+
+        return $customer;
+    }
 }
