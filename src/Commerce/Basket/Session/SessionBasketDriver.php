@@ -1,6 +1,6 @@
 <?php
 
-namespace AltDesign\AltCommerceStatamic\Commerce\Basket;
+namespace AltDesign\AltCommerceStatamic\Commerce\Basket\Session;
 
 use AltDesign\AltCommerce\Commerce\Basket\Basket;
 use AltDesign\AltCommerce\Commerce\Basket\BasketFactory;

@@ -14,7 +14,7 @@ use AltDesign\AltCommerce\Contracts\ProductRepository;
 use AltDesign\AltCommerce\Contracts\Resolver;
 use AltDesign\AltCommerce\Contracts\Settings;
 use AltDesign\AltCommerce\Contracts\VisitorLocator;
-use AltDesign\AltCommerceStatamic\Commerce\Basket\SessionBasketDriverFactory;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Session\SessionBasketDriverFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\StatamicCouponRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateCustomerRedemptionLimit;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateRedemptionLimit;
@@ -106,9 +106,6 @@ class ServiceProvider extends AddonServiceProvider
                 factory: $app->make(ProductFactory::class)
             )
         );
-
-        BasketBroker::$drivers['session'] = SessionBasketDriverFactory::class;
-
 
         ValidateCouponPipeline::register(
             new ValidateRedemptionLimit(),

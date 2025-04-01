@@ -1,5 +1,13 @@
 <?php
 
+
+use AltDesign\AltCommerceStatamic\Commerce\Basket\ContextMiddlewareRunner;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\AddLineItems;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\ApplyCouponCode;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\SetCountryCode;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\SetCurrency;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\RequestBasketDriverFactory;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Session\SessionBasketDriverFactory;
 use AltDesign\AltCommerceStatamic\OrderProcessor\Conditions\OrderIsDraft;
 use AltDesign\AltCommerceStatamic\OrderProcessor\Conditions\OrderIsProcessed;
 use AltDesign\AltCommerceStatamic\OrderProcessor\Conditions\OrderIsProcessing;
@@ -32,13 +40,26 @@ return [
     ],
 
     'baskets' => [
-        'default' => [
-            'driver' => 'session',
-            'key' => 'alt-commerce-basket',
+        'drivers' => [
+            'request' => RequestBasketDriverFactory::class,
+            'session' => SessionBasketDriverFactory::class
         ],
-        'manual-order-generation' => [
-            'driver' => 'request'
-        ]
+        'contexts' => [
+            'default' => [
+                'driver' => 'session',
+                'key' => 'alt-commerce-basket',
+            ],
+            'manual-order' => [
+                'driver' => 'request',
+                'with' => ContextMiddlewareRunner::class,
+                'middleware' => [
+                    SetCountryCode::class,
+                    SetCurrency::class,
+                    AddLineItems::class,
+                    ApplyCouponCode::class,
+                ]
+            ]
+        ],
     ],
 
     'order-pipelines' => [

@@ -54,23 +54,6 @@ class ManualOrderGenerator
         $context->updateBasketCurrency($validated['currency']);
         $context->updateBasketCountry($validated['billing_country_code']);
 
-        foreach ($validated['line_items'] as $lineItem) {
-            $context->addToBasket(
-                productId: $lineItem['product'][0],
-                quantity: $lineItem['quantity'],
-                price: $lineItem['price'] * 100,
-            );
-        }
-
-        if ($discountCode = $validated['discount_code'] ??  null) {
-            $context->applyCoupon(coupon: $discountCode);
-        }
-
-        // Do this is certikit
-       /* if ($discountAmount = $validated['manual_discount_amount'] ?? null) {
-            $context->applyManualDiscount(amount: $discountAmount * 100);
-        }*/
-
         return $context->current();
 
     }
