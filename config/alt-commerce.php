@@ -30,7 +30,16 @@ return [
 
         ]
     ],
-    'customer' => \App\Models\User::class,
+
+    'baskets' => [
+        'default' => [
+            'driver' => 'session',
+            'key' => 'alt-commerce-basket',
+        ],
+        'manual-order-generation' => [
+            'driver' => 'request'
+        ]
+    ],
 
     'order-pipelines' => [
 

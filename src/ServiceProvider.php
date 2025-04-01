@@ -3,10 +3,10 @@
 namespace AltDesign\AltCommerceStatamic;
 
 
+use AltDesign\AltCommerce\Commerce\Basket\BasketBroker;
 use AltDesign\AltCommerce\Commerce\Basket\BasketManager;
 use AltDesign\AltCommerce\Commerce\Payment\GatewayBroker;
 use AltDesign\AltCommerce\Commerce\Pipeline\ValidateCouponPipeline;
-use AltDesign\AltCommerce\Contracts\BasketRepository;
 use AltDesign\AltCommerce\Contracts\CouponRepository;
 use AltDesign\AltCommerce\Contracts\OrderFactory;
 use AltDesign\AltCommerce\Contracts\OrderRepository;
@@ -14,6 +14,7 @@ use AltDesign\AltCommerce\Contracts\ProductRepository;
 use AltDesign\AltCommerce\Contracts\Resolver;
 use AltDesign\AltCommerce\Contracts\Settings;
 use AltDesign\AltCommerce\Contracts\VisitorLocator;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\SessionBasketDriverFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\StatamicCouponRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateCustomerRedemptionLimit;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateRedemptionLimit;
@@ -22,7 +23,6 @@ use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Product\ProductFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Product\ProductQueryBuilder;
 use AltDesign\AltCommerceStatamic\Commerce\Product\StatamicProductRepository;
-use AltDesign\AltCommerceStatamic\Commerce\SessionBasketRepository;
 use AltDesign\AltCommerceStatamic\Contracts\CurrencyConvertor;
 use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
 use AltDesign\AltCommerceStatamic\CP\Actions\AddOrderNote;
@@ -82,19 +82,22 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->bind(OrderFactory::class, StatamicOrderFactory::class);
         $this->app->bind(OrderTransformer::class, BaseOrderTransformer::class);
         $this->app->bind(CurrencyConvertor::class, Support\CurrencyConvertor::class);
-        $this->app->bind(BasketRepository::class, SessionBasketRepository::class);
         $this->app->bind(VisitorLocator::class, Support\VisitorLocator::class);
         $this->app->singleton(BasketManager::class);
 
         $this->app->bind(Resolver::class, fn() => new class() implements Resolver {
-            public function resolve(string $abstract): mixed
+            public function resolve(string $abstract, array $with = []): mixed
             {
-                return app($abstract);
+                return app()->makeWith($abstract, $with);
             }
         });
 
         $this->app->singleton(GatewayBroker::class, function() {
             return new GatewayBroker(app(Resolver::class), config('alt-commerce.payment_gateways'));
+        });
+
+        $this->app->singleton(BasketBroker::class, function() {
+            return new BasketBroker(app(Resolver::class), config('alt-commerce.baskets'));
         });
 
         $this->app->bind(ProductQueryBuilder::class, fn($app) =>
@@ -103,6 +106,9 @@ class ServiceProvider extends AddonServiceProvider
                 factory: $app->make(ProductFactory::class)
             )
         );
+
+        BasketBroker::$drivers['session'] = SessionBasketDriverFactory::class;
+
 
         ValidateCouponPipeline::register(
             new ValidateRedemptionLimit(),

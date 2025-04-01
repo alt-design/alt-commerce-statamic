@@ -32,7 +32,7 @@ class BaseOrderTransformer implements OrderTransformer
             'basket_id' => $order->basketId,
             'customer_id' => $order->customer->customerId(),
             'customer_email' => $order->customer->customerEmail(),
-            'customer_name' => $order->customer->customerName(),
+            'customer_name' => $order->billingAddress->fullName,
             ...$this->buildCustomerData($order->customer),
             'order_number' => $order->orderNumber,
             'order_status' => $order->status->value,

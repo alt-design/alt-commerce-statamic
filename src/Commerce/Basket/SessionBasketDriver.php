@@ -1,15 +1,14 @@
 <?php
 
-namespace AltDesign\AltCommerceStatamic\Commerce;
+namespace AltDesign\AltCommerceStatamic\Commerce\Basket;
 
 use AltDesign\AltCommerce\Commerce\Basket\Basket;
 use AltDesign\AltCommerce\Commerce\Basket\BasketFactory;
-use AltDesign\AltCommerce\Contracts\BasketRepository;
-use Illuminate\Support\Facades\Session;
+use AltDesign\AltCommerce\Contracts\BasketDriver;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
-
-class SessionBasketRepository implements BasketRepository
+class SessionBasketDriver implements BasketDriver
 {
 
     public function __construct(
@@ -47,6 +46,5 @@ class SessionBasketRepository implements BasketRepository
         $this->save($basket);
         return $basket;
     }
-
 
 }

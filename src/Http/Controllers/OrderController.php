@@ -2,7 +2,6 @@
 
 namespace AltDesign\AltCommerceStatamic\Http\Controllers;
 
-use AltDesign\AltCommerce\Exceptions\CouponNotFoundException;
 use AltDesign\AltCommerce\Exceptions\CouponNotValidException;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;

@@ -2,30 +2,13 @@
 
 namespace AltDesign\AltCommerceStatamic\ManualOrder;
 
-use AltDesign\AltCommerce\Actions\AddToBasketAction;
-use AltDesign\AltCommerce\Actions\ApplyCouponAction;
-use AltDesign\AltCommerce\Actions\ApplyManualDiscountAction;
-use AltDesign\AltCommerce\Actions\CreateOrderAction;
-use AltDesign\AltCommerce\Actions\RecalculateBasketAction;
 use AltDesign\AltCommerce\Commerce\Basket\Basket;
-use AltDesign\AltCommerce\Commerce\Basket\BasketFactory;
 use AltDesign\AltCommerce\Commerce\Customer\Address;
 use AltDesign\AltCommerce\Commerce\Order\Order;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateLineItemSubtotals;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateLineItemTax;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateTaxItems;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateTotals;
-use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasketPipeline;
-use AltDesign\AltCommerce\Commerce\Pipeline\ValidateCouponPipeline;
-use AltDesign\AltCommerce\Contracts\CouponRepository;
-use AltDesign\AltCommerce\Contracts\OrderRepository;
 use AltDesign\AltCommerce\Exceptions\BasketException;
 use AltDesign\AltCommerce\Exceptions\CouponNotValidException;
 use AltDesign\AltCommerce\Exceptions\CurrencyNotSupportedException;
 use AltDesign\AltCommerce\Exceptions\ProductNotFoundException;
-use AltDesign\AltCommerce\RuleEngine\RuleManager;
-use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
-use AltDesign\AltCommerceStatamic\Commerce\Product\StatamicProductRepository;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -37,56 +20,12 @@ use Statamic\Facades\Blueprint;
 
 class ManualOrderGenerator
 {
-    protected AddToBasketAction $addToBasketAction;
-    protected RecalculateBasketAction $recalculateBasketAction;
-    protected CreateOrderAction $createOrderAction;
-    protected ApplyCouponAction $applyCouponAction;
-    protected ApplyManualDiscountAction $applyManualDiscountAction;
 
-    public function __construct(
-        protected ManualOrderBasketRepository $basketRepository,
-        protected StatamicProductRepository $productRepository,
-        protected BasketFactory $basketFactory,
-        protected OrderRepository $orderRepository,
-        protected StatamicOrderFactory $orderFactory,
-        protected CouponRepository $couponRepository,
-        protected RuleManager $ruleManager,
-        protected CalculateLineItemSubtotals $calculateLineItemSubtotals,
-        protected CalculateLineItemTax $calculateLineItemTax,
-        protected CalculateTaxItems $calculateTaxItems,
-        protected CalculateTotals $calculateTotals,
 
-    )
+    public function __construct()
     {
 
-        $this->recalculateBasketAction = new RecalculateBasketAction(
-            basketRepository: $this->basketRepository,
-            recalculateBasketPipeline:  app(RecalculateBasketPipeline::class),
-        );
 
-        $this->addToBasketAction = new AddToBasketAction(
-            basketRepository: $this->basketRepository,
-            productRepository: $this->productRepository,
-            recalculateBasketAction: $this->recalculateBasketAction
-        );
-
-        $this->createOrderAction = new CreateOrderAction(
-            basketRepository: $this->basketRepository,
-            orderRepository: $this->orderRepository,
-            orderFactory: $this->orderFactory
-        );
-
-        $this->applyCouponAction = new ApplyCouponAction(
-            basketRepository: $this->basketRepository,
-            couponRepository: $this->couponRepository,
-            recalculateBasketAction: $this->recalculateBasketAction,
-            validateCouponPipeline: app(ValidateCouponPipeline::class),
-        );
-
-        $this->applyManualDiscountAction = new ApplyManualDiscountAction(
-            basketRepository: $this->basketRepository,
-            recalculateBasketAction: $this->recalculateBasketAction,
-        );
     }
 
 
@@ -111,15 +50,12 @@ class ManualOrderGenerator
 
         $validated['billing_country_code'] = (new ISO3166())->alpha3($validated['billing_country_code'])['alpha2'];
 
-        $basket = $this->basketFactory->create(
-            currency: $validated['currency'],
-            countryCode: $validated['billing_country_code'],
-        );
-
-        $this->basketRepository->setBasket($basket);
+        $context = \AltDesign\AltCommerceStatamic\Facades\Basket::context('manual-order-generation');
+        $context->updateBasketCurrency($validated['currency']);
+        $context->updateBasketCountry($validated['billing_country_code']);
 
         foreach ($validated['line_items'] as $lineItem) {
-            $this->addToBasketAction->handle(
+            $context->addToBasket(
                 productId: $lineItem['product'][0],
                 quantity: $lineItem['quantity'],
                 price: $lineItem['price'] * 100,
@@ -127,14 +63,16 @@ class ManualOrderGenerator
         }
 
         if ($discountCode = $validated['discount_code'] ??  null) {
-            $this->applyCouponAction->handle(coupon: $discountCode);
+            $context->applyCoupon(coupon: $discountCode);
         }
 
-        if ($discountAmount = $validated['manual_discount_amount'] ?? null) {
-            $this->applyManualDiscountAction->handle(amount: $discountAmount * 100);
-        }
+        // Do this is certikit
+       /* if ($discountAmount = $validated['manual_discount_amount'] ?? null) {
+            $context->applyManualDiscount(amount: $discountAmount * 100);
+        }*/
 
-        return $basket;
+        return $context->current();
+
     }
 
     /**
@@ -147,6 +85,9 @@ class ManualOrderGenerator
     public function createOrderFromRequest(Request $request): Order
     {
 
+        //todo needs implementing (mostly) in certikit
+
+        throw new \Exception('Not implemented');
         $additionalBlueprint = Blueprint::find('alt-commerce::additional_order_fields');
         $validator = Validator::make($request->all(), [
             'order_date' => 'nullable|array',
@@ -177,6 +118,10 @@ class ManualOrderGenerator
 
             $validated = $validator->validated();
             $orderDate = !empty($validated['order_date']['date']) ? Carbon::parse($validated['order_date']['date']) : now();
+
+
+            $context = \AltDesign\AltCommerceStatamic\Facades\Basket::context('manual-order-generation');
+
             return $this->createOrderAction->handle(
                 customer: $this->getCustomer($validated),
                 additional: [
