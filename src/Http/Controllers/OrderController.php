@@ -237,7 +237,7 @@ class OrderController
             $validated = $validator->validated();
             $orderDate = !empty($validated['order_date']['date']) ? Carbon::parse($validated['order_date']['date']) : now();
 
-            return Basket::context('manual-order-generation')->createOrder(
+            $order = Basket::context('manual-order')->createOrder(
                 customer: $this->getCustomer($validated),
                 additional: [
                     'billing_address' => new Address(
@@ -258,6 +258,10 @@ class OrderController
                 ],
                 orderDate: $orderDate->toDateTimeImmutable()
             );
+
+            return [
+                'id' => $order->id
+            ];
 
         } catch (ValidationException $e) {
             $errors->merge($e->errors());
