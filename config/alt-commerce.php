@@ -1,6 +1,7 @@
 <?php
 
 
+use AltDesign\AltCommerce\Actions\ApplyManualDiscountAction;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\ContextMiddlewareRunner;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\AddLineItems;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\ApplyCouponCode;
@@ -57,6 +58,7 @@ return [
                     SetCurrency::class,
                     AddLineItems::class,
                     ApplyCouponCode::class,
+                    ApplyManualDiscountAction::class,
                 ]
             ]
         ],
