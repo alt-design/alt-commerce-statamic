@@ -25,7 +25,7 @@ class OrderProcessor
 
     }
 
-    public function process(StatamicOrder $order, string $profile = 'default', string $stage = null, string $connection = null, string $mode = null): void
+    public function process(StatamicOrder $order, string $profile = 'default', string $stage = null, string $connection = null, string $mode = null, \Closure $after = null): void
     {
 
         $config = config('alt-commerce.order-pipelines.' . $profile, []);
@@ -35,6 +35,10 @@ class OrderProcessor
 
         $stageName = $stage ?? Arr::first(array_keys($config['stages']));
         $stage = $config['stages'][$stageName] ?? throw new \Exception("Stage '$stageName' does not exist in profile '$profile'");
+
+        if ($after) {
+            array_push($stage['tasks'], ...$after($order->id));
+        }
 
         $this->runStage(
             order: $order,
@@ -81,7 +85,12 @@ class OrderProcessor
             'logger' => $this->logger
         ];
 
-        $tasks = collect($tasks)->map(fn($task) => $this->container->makeWith($task, $args))->toArray();
+        $tasks = collect($tasks)->map(function($task) use($args) {
+            if (is_object($task)) {
+                return $task;
+            }
+            return $this->container->makeWith($task, $args);
+        })->toArray();
 
         // Add a task to run the processor again on the order
         if ($nextStage && ($mode === 'sequential')) {
