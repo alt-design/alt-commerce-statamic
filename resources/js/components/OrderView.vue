@@ -125,7 +125,7 @@ export default {
 
 </script>
 <style scoped>
-.order-view {
-    @apply space-y-5;
+.order-view > * + * {
+    margin-top: 20px;
 }
 </style>
