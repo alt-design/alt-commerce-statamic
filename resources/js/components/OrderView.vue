@@ -124,7 +124,7 @@ export default {
 }
 
 </script>
-<style scoped>
+<style>
 .order-view > * + * {
     margin-top: 20px;
 }
