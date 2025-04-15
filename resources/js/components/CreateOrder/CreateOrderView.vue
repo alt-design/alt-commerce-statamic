@@ -36,7 +36,9 @@ export default {
                 this.$toast.success('Order created', { duration: 3000 });
 
                 // redirect to order show page
-                window.location.href = '/cp/collections/orders/entries/' + data.id
+                setTimeout(() => {
+                    window.location.href = '/cp/collections/orders/entries/' + data.id
+                }, 500)
 
             } catch(error) {
                 if (error?.response?.status === 422) {
