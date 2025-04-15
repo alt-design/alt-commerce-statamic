@@ -35,10 +35,10 @@ export default {
 
                 this.$toast.success('Order created', { duration: 3000 });
 
+                this.$dirty.disableWarning()
+
                 // redirect to order show page
-                setTimeout(() => {
-                    window.location.href = '/cp/collections/orders/entries/' + data.id
-                }, 500)
+                window.location.href = '/cp/collections/orders/entries/' + data.id
 
             } catch(error) {
                 if (error?.response?.status === 422) {
