@@ -39,6 +39,10 @@ class OrderItemExportController
                 'format' => fn($row) => $row['customer_email'],
             ],
             [
+                'title' => 'Customer Phone',
+                'format' => fn($row) => $row['customer_phone'],
+            ],
+            [
                 'title' => 'Country',
                 'format' => fn($row) => $row['country'],
             ],
@@ -69,6 +73,10 @@ class OrderItemExportController
             [
                 'title' => 'Discount Total',
                 'format' => fn($row) => number_format($row['discount_total'] / 100, 2)
+            ],
+            [
+                'title' => 'Discount Code',
+                'format' => fn($row) => $row['discount_code']
             ],
             [
                 'title' => 'Order number',
@@ -125,19 +133,20 @@ class OrderItemExportController
         foreach ($orders as $order) {
 
             foreach ($order->lineItems as $lineItem) {
-
                 for ($i = 0; $i < $lineItem->quantity; $i++) {
                     $rows[] = [
                         'created_at' => $order->createdAt,
                         'product_name' => $lineItem->productName,
                         'company_name' => $order->billingAddress->company,
                         'contact_name' => $order->billingAddress->fullName,
-                        'customer_email' => $order->customer->customerEmail(),
+                        'customer_email' => $order->customer ? $order->customer->customerEmail() : null,
+                        'customer_phone' => $order->additional['phone_number'] ?? null,
                         'country' => $order->billingAddress->countryCode,
                         'payment_method' => $order->additional['payment_method'] ?? null,
                         'currency' => $order->currency,
                         'amount' => $lineItem->amount,
                         'discount_total' => $lineItem->discountTotal / $lineItem->quantity,
+                        'discount_code' => $order->discountItems[0]->couponCode ?? null,
                         'order_number' => $order->orderNumber,
                         'tax_name' => $lineItem->taxName,
                         'tax_rate' => $lineItem->taxRate,
