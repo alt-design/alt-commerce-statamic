@@ -19,7 +19,7 @@ class Price extends Tags
 
     public function format(string|null $currency = null, int|null $amount = null): string
     {
-        $currency = $this->params->get('currency', $currency);
+        $currency = $this->params->get('currency', $currency)['value'];
         $amount = (int)$this->params->get('amount', $amount);
 
         // todo pull in user locale from visitor locator
