@@ -9,13 +9,10 @@ class SetCountryCode
 {
     public function handle(BasketContext $context, \Closure $next)
     {
-
-        $validated = request()->validate([
-            'billing_country_code' => 'required|string',
-        ]);
-
-        $countryCode = (new ISO3166)->alpha3($validated['billing_country_code'])['alpha2'];
-        $context->updateBasketCountry($countryCode);
+        if ($countryCode = request('billing_country_code')) {
+            $countryCode = (new ISO3166)->alpha3($countryCode)['alpha2'];
+            $context->updateBasketCountry($countryCode);
+        }
         return $next($context);
     }
 }

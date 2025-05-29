@@ -27,6 +27,7 @@ use AltDesign\AltCommerceStatamic\Contracts\CurrencyConvertor;
 use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
 use AltDesign\AltCommerceStatamic\CP\Actions\AddOrderNote;
 use AltDesign\AltCommerceStatamic\CP\Actions\DeleteOrderNote;
+use AltDesign\AltCommerceStatamic\CP\Actions\ProcessOrder;
 use AltDesign\AltCommerceStatamic\CP\Actions\UpdateOrderStatusToRefunded;
 use AltDesign\AltCommerceStatamic\Fieldtypes\MultiCurrencyPricing;
 use AltDesign\AltCommerceStatamic\Fieldtypes\TaxRateSelector;

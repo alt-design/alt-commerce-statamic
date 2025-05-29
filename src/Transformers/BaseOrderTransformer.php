@@ -12,11 +12,13 @@ use AltDesign\AltCommerce\Commerce\Order\Order;
 use AltDesign\AltCommerce\Commerce\Billing\Subscription;
 use AltDesign\AltCommerce\Commerce\Payment\Transaction;
 use AltDesign\AltCommerce\Contracts\Customer;
+use AltDesign\AltCommerce\Enum\DiscountType;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderLog;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderNote;
 use AltDesign\AltCommerceStatamic\Concerns\HasGatewayEntities;
 use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
+use League\ISO3166\ISO3166;
 
 class BaseOrderTransformer implements OrderTransformer
 {
@@ -24,6 +26,36 @@ class BaseOrderTransformer implements OrderTransformer
 
     public function toEntryData(StatamicOrder $order): array
     {
+
+
+        $items = [];
+        foreach ($order->lineItems as $lineItem) {
+            $items[] = [
+                'product' => $lineItem->productId,
+                'price' => $lineItem->amount,
+                'quantity' => $lineItem->quantity,
+                'subtotal' => $lineItem->subTotal,
+                'tax_auto' => true,
+                'tax_name' => $lineItem->taxName,
+                'tax_rate' => $lineItem->taxRate,
+                'tax_amount' => $lineItem->taxTotal,
+                'type' => 'line_item',
+                'enabled' => true
+            ];
+        }
+
+        foreach ($order->discountItems as $discountItem) {
+            if ($discountItem->type === DiscountType::MANUAL) {
+                $items[] = [
+                    'discount_name' => $discountItem->name,
+                    'discount_amount' => $discountItem->amount,
+                    'type' => 'discount_item',
+                    'enabled' => true
+                ];
+            }
+        }
+
+
         return [
             'id' => $order->id,
             'title' => 'Order #'.$order->orderNumber,
@@ -44,7 +76,6 @@ class BaseOrderTransformer implements OrderTransformer
             'fee_total' => $order->feeTotal,
             'total' => $order->total,
             'outstanding' => $order->outstanding,
-            'additional' => $order->additional,
             'notes' => collect($order->notes)
                 ->map(fn(StatamicOrderNote $note) => [
                     'id' => $note->id,
@@ -139,6 +170,9 @@ class BaseOrderTransformer implements OrderTransformer
                 ->toArray(),
             'gateway_entities' => $this->buildGatewayEntities($order),
             ...$this->buildAddress('billing', $order->billingAddress),
+            'coupon_code' => collect($order->discountItems)->first(fn(DiscountItem $item) => $item->type === DiscountType::PRODUCT_COUPON)?->couponCode,
+            'items' => $items,
+            ...$order->additional,
         ];
     }
 
@@ -161,6 +195,11 @@ class BaseOrderTransformer implements OrderTransformer
 
     protected function buildAddress(string $prefix, Address|null $address): array
     {
+        $countryCode = $address?->countryCode;
+        if ($countryCode && strlen($countryCode) === 2) {
+            $countryCode = (new ISO3166)->alpha2($countryCode)['alpha3'];
+        }
+
         return [
             $prefix.'_full_name' => $address?->fullName,
             $prefix.'_company' => $address?->company,
@@ -169,7 +208,7 @@ class BaseOrderTransformer implements OrderTransformer
             $prefix.'_locality' => $address?->locality,
             $prefix.'_region' => $address?->region,
             $prefix.'_postcode' => $address?->postalCode,
-            $prefix.'_country_code' => $address?->countryCode
+            $prefix.'_country_code' => $countryCode,
         ];
     }
 

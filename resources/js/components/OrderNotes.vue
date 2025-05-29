@@ -4,7 +4,10 @@ export default {
 
     emits: ['deleteNote'],
     props: {
-        order: Object,
+        notes: {
+            type: Array,
+            default: () => [],
+        }
     },
     data() {
         return {
@@ -49,10 +52,10 @@ export default {
 
 <template>
 
-<div class="card order-notes" v-if="order.notes.length">
+<div class="card order-notes" v-if="notes.length">
     <h2>Notes</h2>
     <div class="note-list">
-        <div v-for="note in order.notes" :key="note.id" class="py-6">
+        <div v-for="note in notes" :key="note.id" class="py-6">
 
             <div class="author text-gray-600">
                 <div class="font-medium">{{ note.userName }}</div>

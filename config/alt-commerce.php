@@ -1,9 +1,7 @@
 <?php
 
-
-use AltDesign\AltCommerce\Actions\ApplyManualDiscountAction;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\ContextMiddlewareRunner;
-use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\AddLineItems;
+use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\AddItems;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\ApplyCouponCode;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\SetCountryCode;
 use AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware\SetCurrency;
@@ -50,15 +48,14 @@ return [
                 'driver' => 'session',
                 'key' => 'alt-commerce-basket',
             ],
-            'manual-order' => [
+            'cp-order' => [
                 'driver' => 'request',
                 'with' => ContextMiddlewareRunner::class,
                 'middleware' => [
                     SetCountryCode::class,
                     SetCurrency::class,
-                    AddLineItems::class,
+                    AddItems::class,
                     ApplyCouponCode::class,
-                    ApplyManualDiscountAction::class,
                 ]
             ]
         ],

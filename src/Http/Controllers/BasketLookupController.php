@@ -8,13 +8,14 @@ class BasketLookupController
 {
     public function __invoke()
     {
-        $basket = Basket::context('manual-order')->current();
+        $basket = Basket::context('cp-order')->current();
         return [
-            'discountTotal' => $basket->discountTotal,
-            'subTotal' => $basket->subTotal,
-            'taxTotal' => $basket->taxTotal,
+            'discountTotal' => number_format($basket->discountTotal / 100, 2),
+            'subTotal' => number_format($basket->subTotal/ 100, 2),
+            'taxTotal' => number_format($basket->taxTotal/ 100, 2),
             'taxItems' => $basket->taxItems,
-            'total' => $basket->total,
+            'lineItems' => $basket->lineItems,
+            'total' => number_format($basket->total/ 100, 2),
         ];
     }
 }

@@ -1,28 +1,163 @@
 <script>
-import OrderSummary from "./OrderSummary.vue";
-import OrderCustomerDetails from "./OrderCustomerDetails.vue";
-import OrderLineItems from "./OrderLineItems.vue";
-import OrderTransactions from "./OrderTransactions.vue";
-import OrderSubscriptions from "./OrderSubscriptions.vue";
-import useReplaceableComponent from "../library/useReplaceableComponent";
-import OrderAdditionalFields from "./OrderAdditionalFields.vue";
+import HasActions from 'statamic/components/publish/HasActions';
 import OrderNotes from "./OrderNotes.vue";
-import OrderHeader from "./OrderHeader.vue";
-import HasActions from 'statamic/components/publish/HasActions.js';
 import OrderLogs from "./OrderLogs.vue";
+import OrderTransactions from "./OrderTransactions.vue";
 export default {
     mixins: [HasActions],
-    props: {
-        initialOrder: Object,
-        gatewayUrls: Array,
-        additionalFields: Object
-    },
+    components: {OrderTransactions, OrderLogs, OrderNotes},
+    props: [
+        'endpoint'
+    ],
     data() {
         return {
-            order: this.initialOrder,
+
+            loading: true,
+            id: null,
+            notes: null,
+            logs: null,
+            transactions: null,
+            blueprint: null,
+            meta: null,
+            values: null,
+            valuesMutable: null,
+            basketLookupUrl: null,
+            productLookupUrl: null,
+            saveUrl: null,
+            saveMethod: null,
+            gatewayUrls: null,
+            errors: {},
+
+            customerCache: {},
+            productCache: {},
+            commitStoreCallback: null,
+            axiosController: {},
         }
     },
+    computed: {
+        isCreating() {
+            return !this.id
+        }
+    },
+
     methods: {
+        async submit() {
+            try {
+                const {data} = await this.$axios.request({
+                    method: this.saveMethod,
+                    url: this.saveUrl,
+                    data: this.valuesMutable,
+                })
+
+                this.$toast.success('Order Saved', {duration: 3000});
+
+                this.$dirty.disableWarning()
+
+                if (this.isCreating) {
+                    window.location.href = '/cp/collections/orders/entries/' + data.id
+                }
+
+            } catch (error) {
+                if (error?.response?.status === 422) {
+                    this.errors = error.response.data.errors
+                    this.$toast.error('Please check the order for errors.');
+                } else {
+                    this.$toast.error('An unknown error occurred.');
+                }
+            }
+        },
+
+
+        async recalculate() {
+
+            if (this.axiosController.recalculate) {
+                this.axiosController.recalculate.abort()
+            }
+
+            this.axiosController.recalculate = new AbortController()
+
+            try {
+                const {data} = await this.$axios.get(this.basketLookupUrl, {
+                    params: this.valuesMutable,
+                    signal: this.axiosController.recalculate.signal
+                })
+
+                this.valuesMutable.sub_total = data.subTotal
+                this.valuesMutable.tax_total = data.taxTotal
+                this.valuesMutable.discount_total = data.discountTotal
+                this.valuesMutable.total = data.total
+
+
+                this.valuesMutable.items.forEach(item => {
+                    if (item.type !== 'line_item' || !item.tax_auto) {
+                        return
+                    }
+                    const lineItem = data.lineItems.find(x => x.productId === item.product[0])
+                    item.tax_amount = lineItem.taxTotal / 100
+                    item.tax_rate = lineItem.taxRate
+                    item.tax_name = lineItem.taxName
+                })
+
+
+            } catch(error) {
+                if (this.$axios.isCancel(error) || error.name === 'CanceledError') {
+                    return
+                }
+                console.log(error)
+                this.valuesMutable.sub_total = null
+                this.valuesMutable.total = null
+                this.valuesMutable.tax_total = null
+                this.valuesMutable.discount_total = null
+            }
+        },
+
+        async grabProduct(id) {
+            if (this.productCache[id]) {
+                return this.productCache[id]
+            }
+            const {data} = await this.$axios.get(this.productLookupUrl, {params: {id: id}})
+
+            if (!data) {
+                throw 'unable to find product with id: ' + id
+            }
+
+            this.productCache[id] = data
+            return data
+        },
+
+        async prefillLineItems(payload) {
+
+            for (let i in payload.value) {
+
+                const item = payload.value[i]
+                if (item.type !== 'line_item') {
+                    continue;
+                }
+
+                const prev = this.valuesMutable.items[i] ?? null
+
+                if (!item.product.length) {
+                    item.price = null
+                    item.quantity = 1
+                    item.subtotal = null
+                    continue;
+                }
+
+
+                if (!item.quantity || prev?.product[0] !== item.product[0]) {
+                    item.quantity = 1
+                }
+
+                if (!item.price || prev?.product[0] !== item.product[0]) {
+                    const product = await this.grabProduct(item.product[0])
+                    const pricing = (product.pricing ?? []).find(x => x.currency === this.values.currency)
+                    item.price = pricing.amount
+                }
+
+                item.subtotal = item.quantity * item.price
+            }
+        },
+
         async deleteNote({note, resolve}) {
             const payload = {
                 action: 'delete_order_note',
@@ -30,7 +165,7 @@ export default {
                     collection: 'orders',
                     view: 'form'
                 },
-                selections: [this.order.id],
+                selections: [this.id],
                 values: {
                     note
                 }
@@ -39,9 +174,9 @@ export default {
             this.$axios
                 .post(this.itemActionUrl, payload, { responseType: 'blob' })
                 .then((response) => {
-                    const index = this.order.notes.findIndex(n => n.id === note.id)
+                    const index = this.notes.findIndex(n => n.id === note.id)
                     if (index !== -1) {
-                        this.order.notes.splice(index, 1)
+                        this.notes.splice(index, 1)
                     }
                     response.data.text().then(data => {
                         data = JSON.parse(data);
@@ -58,74 +193,176 @@ export default {
                 .finally(() => {
                     resolve()
                 });
+        },
+
+        async commitStore(type, payload, options) {
+            if (type === 'publish/order/setFieldValue') {
+                if (payload.handle === 'items') {
+                    await this.prefillLineItems(payload)
+                }
+            }
+            return this.commitStoreCallback.call(this, type, payload, options);
+        },
+
+        async setup(data) {
+
+            this.id = data.id
+            this.gatewayUrls = data.gatewayUrls
+            this.meta = data.meta
+            this.notes = data.notes
+            this.logs = data.logs
+            this.transactions = data.transactions
+            this.saveMethod = data.saveMethod
+            this.saveUrl = data.saveUrl
+            this.values = data.values
+            this.valuesMutable = data.values
+            this.basketLookupUrl = data.basketLookupUrl
+            this.productLookupUrl = data.productLookupUrl
+            this.loading = false
+            this.itemActions = data.itemActions
+            this.itemActionUrl = data.itemActionUrl
+
+            const blueprint = data.blueprint;
+            blueprint.tabs.forEach(tab => {
+                tab.sections.forEach(section => {
+                    section.fields.forEach(field => {
+                        if (this.isCreating && ['order_number', 'order_status'].includes(field.handle)) {
+                            field.visibility = 'hidden'
+                        }
+
+                        if (!this.isCreating && field.handle === 'currency') {
+                            field.visibility = 'read_only'
+                        }
+                    })
+                })
+            })
+
+            this.blueprint = blueprint
+        },
+
+        extractFields(blueprint) {
+
+            const fields = []
+            blueprint.tabs.forEach(tab => {
+
+                tab.sections.forEach(section => {
+
+                    section.fields.forEach(field => {
+                        fields.push(field)
+                    })
+                })
+            })
+
+            return fields
+
         }
     },
-    render(createElement) {
+
+
+    beforeMount() {
+
+
+        // Fired after value has been committed
+        this.$store.subscribe((mutation) => {
+            if (mutation.type === 'publish/order/setFieldValue' && mutation.payload.handle === 'items') {
+                this.recalculate()
+            }
+
+            if (mutation.type === 'publish/order/setFieldValue' && mutation.payload.handle === 'coupon_code') {
+                this.recalculate()
+            }
+        })
+
+        // Fired before value has been committed
+        this.commitStoreCallback = this.$store.commit
+        this.$store.commit = this.commitStore
 
         Statamic.$callbacks.add('orderActionRan', (data) => {
             data.actions.forEach((action) => {
                 if (action.type === 'note-added') {
-                    this.order.notes.unshift(JSON.parse(action.note))
-                    this.$set(this.order, 'notes', [...this.order.notes]);
+                    this.notes.unshift(JSON.parse(action.note))
                 }
 
                 if (action.type=== 'log-added') {
-                    this.order.logs.unshift(JSON.parse(action.log))
-                    this.$set(this.order, 'logs', [...this.order.logs]);
+                    this.logs.unshift(JSON.parse(action.log))
                 }
 
                 if (action.type === 'note-deleted') {
-                    const index = this.order.notes.findIndex(n => n.id === action.id)
+                    const index = this.notes.findIndex(n => n.id === action.id)
                     if (index !== -1) {
-                        this.order.notes.splice(index, 1)
+                        this.notes.splice(index, 1)
                     }
                 }
 
                 if (action.type === 'status-updated') {
-                    this.order.status = action.status
+                    this.status = action.status
                 }
             })
         });
 
-        const defaultArgs = {
-            props: {
-                ...this.$props,
-                order: this.order,
-                blueprint: this.additionalFields.blueprint,
-                fields: this.additionalFields.fields,
-                values: this.additionalFields.values,
-            },
-            on: {
-                deleteNote: this.deleteNote
-            }
-        }
+        this.$axios.get(this.endpoint).then(({data}) => this.setup(data))
+    },
 
-        const stack = [
-            useReplaceableComponent('order-header', OrderHeader, defaultArgs),
-            useReplaceableComponent('order-summary', OrderSummary, defaultArgs),
-            useReplaceableComponent('order-customer-details', OrderCustomerDetails, defaultArgs),
-            useReplaceableComponent('order-line-items', OrderLineItems, defaultArgs),
-            useReplaceableComponent('order-subscription-items', OrderSubscriptions, defaultArgs),
-            useReplaceableComponent('order-transactions', OrderTransactions, defaultArgs),
-            useReplaceableComponent('order-additional-fields', OrderAdditionalFields, defaultArgs),
-            useReplaceableComponent('order-notes', OrderNotes, defaultArgs),
-            useReplaceableComponent('order-logs', OrderLogs, defaultArgs)
-        ]
+    mounted() {
 
-        return createElement('div',
-            {
-                attrs: {
-                    class: 'order-view'
-                }
-            },
-            stack.map(item => createElement(item.component.value, {...item.props.value}))
-        )
-    }
+
+
+
+    },
 }
-
 </script>
-<style>
-.order-view > * + * {
-    margin-top: 20px;
+<template>
+    <publish-container
+        v-if="!loading"
+        ref="container"
+        :blueprint="blueprint"
+        v-model="valuesMutable"
+        :meta="meta"
+        name="order"
+        :key="this.id"
+        :errors="errors"
+        v-slot="{ setFieldValue, setFieldMeta }"
+    >
+        <div>
+            <div class="flex items-center mb-6">
+                <h1 class="flex-1">
+                    <template v-if="!isCreating">Edit Order {{ values.order_number }}</template>
+                    <template v-else>Create order</template>
+                </h1>
+                <dropdown-list v-if="itemActions">
+                    <data-list-inline-actions
+                        :actions="itemActions"
+                        :item="id"
+                        :url="itemActionUrl"
+                        @completed="actionCompleted"
+                    />
+                </dropdown-list>
+                <button type="submit" class="btn-primary" @click="submit">
+                    Save
+                </button>
+            </div>
+
+            <publish-tabs
+                @updated="setFieldValue"
+                @meta-updated="setFieldMeta"
+            :enable-sidebar="true"/>
+
+
+            <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
+
+            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" />
+
+            <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
+
+        </div>
+    </publish-container>
+
+</template>
+<style scoped>
+td {
+    @apply p-2 text-lg;
+}
+td:last-child {
+    @apply font-bold pl-8;
 }
 </style>

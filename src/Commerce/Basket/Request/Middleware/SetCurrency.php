@@ -8,12 +8,11 @@ class SetCurrency
 {
     public function handle(BasketContext $context, \Closure $next)
     {
-
-        $validated = request()->validate([
+        request()->validate([
             'currency' => 'required|string',
         ]);
 
-        $context->updateBasketCurrency($validated['currency']);
+        $context->updateBasketCurrency(request('currency'));
         return $next($context);
     }
 }

@@ -9,12 +9,14 @@ class ApplyCouponCode
     public function handle(BasketContext $context, \Closure $next)
     {
 
-        $validated = request()->validate([
-            'discount_code' => 'nullable|string',
+        request()->validate([
+            'coupon_code' => 'nullable|string',
         ]);
 
-        if ($discountCode = $validated['discount_code'] ?? null) {
-            $context->applyCoupon(coupon: $discountCode);
+        if ($code = request('coupon_code')) {
+            try {
+                $context->applyCoupon(coupon: $code);
+            } catch (\Throwable $e) {}
         }
 
         return $next($context);

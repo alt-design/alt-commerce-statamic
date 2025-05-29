@@ -7,6 +7,46 @@ use Illuminate\Support\Str;
 
 class StatamicOrder extends Order
 {
+
+    public const RESERVED_FIELDS = [
+        'id',
+        'title',
+        'order_number',
+        'order_status',
+        'currency',
+        'order_date',
+        'customer',
+        'billing_company',
+        'billing_full_name',
+        'billing_country_code',
+        'billing_postcode',
+        'billing_region',
+        'billing_locality',
+        'billing_street',
+        'billing_phone_number',
+        'items',
+        'sub_total',
+        'tax_total',
+        'discount_total',
+        'delivery_total',
+        'outstanding',
+        'fee_total',
+        'total',
+        'slug',
+        'created_at',
+        'basket_id',
+        'customer_id',
+        'customer_email',
+        'line_items',
+        'tax_items',
+        'discount_items',
+        'coupon_code',
+        'items',
+        'transactions',
+        'notes',
+        'logs'
+    ];
+
     /**
      * @var StatamicOrderNote[]
      */

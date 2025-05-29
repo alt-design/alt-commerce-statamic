@@ -11,7 +11,6 @@ use AltDesign\AltCommerce\Commerce\Basket\TaxItem;
 use AltDesign\AltCommerce\Commerce\Customer\Address;
 use AltDesign\AltCommerce\Commerce\Payment\Transaction;
 use AltDesign\AltCommerce\Commerce\Billing\Subscription;
-use AltDesign\AltCommerce\Contracts\CouponRepository;
 use AltDesign\AltCommerce\Contracts\Customer;
 use AltDesign\AltCommerce\Contracts\OrderFactory;
 use AltDesign\AltCommerce\Enum\DiscountType;
@@ -25,6 +24,8 @@ use AltDesign\AltCommerceStatamic\Concerns\HasGatewayEntities;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTimeImmutable;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
 use Statamic\Entries\Entry;
 
@@ -32,10 +33,6 @@ class StatamicOrderFactory implements OrderFactory
 {
     use HasGatewayEntities;
 
-    public function __construct(protected CouponRepository $couponRepository)
-    {
-
-    }
     /**
      * @param array<string, mixed> $additional
      */
@@ -43,18 +40,13 @@ class StatamicOrderFactory implements OrderFactory
         string $orderNumber,
         Basket $basket,
         Customer $customer,
+        Address|null $billingAddress = null,
+        Address|null $shippingAddress = null,
         array $additional = [],
         string|null $orderId = null,
         \DateTimeImmutable|null $orderDate = null,
     ): StatamicOrder
     {
-        $billingAddress = ($additional['billing_address'] ?? null) instanceof Address ?
-            $additional['billing_address'] : null;
-
-        $shippingAddress = ($additional['shipping_address'] ?? null) instanceof Address ?
-            $additional['shipping_address'] : null;
-
-        unset($additional['billing_address'], $additional['shipping_address']);
 
         return new StatamicOrder(
             id: $orderId ?? Uuid::uuid4(),
@@ -87,113 +79,89 @@ class StatamicOrderFactory implements OrderFactory
 
     public function fromEntry(Entry $entry): StatamicOrder
     {
+
+        $altOrder = $entry;
+
         $transactions = [];
-        foreach ($entry->get('transactions') ?? [] as $transaction) {
+        foreach ($altOrder['transactions'] ?? [] as $transaction) {
             $transactions[] = new Transaction(
-                id: $transaction['id'],
+                ...$this->mapKeys($transaction, ['id', 'currency', 'amount', 'rejection_reason', 'gateway', 'gateway_id', 'additional']),
                 type: TransactionType::from($transaction['type']),
                 status: TransactionStatus::from($transaction['status']),
-                currency: $transaction['currency'],
-                amount: $transaction['amount'],
                 createdAt: new DateTimeImmutable($transaction['created_at']),
-                rejectionReason: $transaction['rejection_reason'],
-                additional: $transaction['additional'],
-                gateway: $transaction['gateway'] ?? null,
-                gatewayId: $transaction['gateway_id'] ?? null,
             );
         }
 
         $subscriptions = [];
-        foreach ($entry->get('subscriptions') ?? [] as $subscription) {
+        foreach ($altOrder['subscriptions'] ?? [] as $subscription) {
             $subscriptions[] = new Subscription(
-                id: $subscription['id'],
+                ...$this->mapKeys($subscription, ['id', 'additional', 'gateway', 'gateway_id']),
                 status: SubscriptionStatus::from($subscription['status']),
                 createdAt: new DateTimeImmutable($subscription['created_at']),
-                additional: $subscription['additional'],
-                gateway: $subscription['gateway'] ?? null,
-                gatewayId: $subscription['gateway_id'] ?? null,
             );
 
         }
 
         $lineItems = [];
-        foreach ($entry->get('line_items') ?? [] as $lineItem) {
+        foreach ($altOrder['line_items'] ?? [] as $lineItem) {
 
             $discounts = [];
             foreach ($lineItem['discounts'] ?? [] as $discount) {
-                $discounts[] = new LineDiscount(
-                    id: $discount['id'],
-                    discountItemId: $discount['discount_item_id'],
-                    name: $discount['name'],
-                    amount: $discount['amount'],
-                );
+                $discounts[] = new LineDiscount(...$this->mapKeys($discount, ['id', 'discount_item_id', 'name', 'amount']));
             }
 
             $lineItems[] = new LineItem(
-                id: $lineItem['id'],
-                productId: $lineItem['product_id'],
-                productName: $lineItem['product_name'],
-                amount: $lineItem['amount'],
-                quantity: $lineItem['quantity'],
-                discounts: $discounts,
-                discountTotal: $lineItem['discount_total'],
-                subTotal: $lineItem['sub_total'],
-                taxTotal: $lineItem['tax_total'],
-                taxRate: $lineItem['tax_rate'],
-                taxName: $lineItem['tax_name'],
+                ...$this->mapKeys($lineItem, [
+                    'id',
+                    'product_id',
+                    'product_name',
+                    'amount',
+                    'quantity',
+                    'discount_total',
+                    'sub_total',
+                    'tax_total',
+                    'tax_rate',
+                    'tax_name',
+                ]),
+                discounts: $discounts
             );
         }
 
         $billingItems = [];
-        foreach ($entry->get('billing_items') ?? [] as $billingItem) {
+        foreach ($altOrder['billing_items'] ?? [] as $billingItem) {
             $billingItems[] = new BillingItem(
-                id: $billingItem['id'],
-                productId: $billingItem['product_id'],
-                billingPlanId: $billingItem['billing_plan_id'],
-                productName: $billingItem['product_name'],
-                amount: $billingItem['amount'],
+                ...$this->mapKeys($billingItem, ['id', 'product_id', 'billing_plan_id', 'product_name', 'amount', 'additional']),
                 billingInterval: new Duration($billingItem['billing_interval'], DurationUnit::from($billingItem['billing_interval_unit'])),
                 trialPeriod: $billingItem['trial_period'] ?
                     new Duration($billingItem['trail_period'], DurationUnit::from($billingItem['trial_period_unit']))
                     : null,
-                additional: $billingItem['additional'],
                 gatewayEntities: $this->extractGatewayEntities($entry, 'billing_item', $billingItem['id']),
             );
         }
 
         $taxItems = [];
-        foreach ($entry->get('tax_items') ?? [] as $taxItem) {
-            $taxItems[] = new TaxItem(
-                name: $taxItem['name'],
-                amount: $taxItem['amount'],
-                rate: $taxItem['rate'],
-            );
+        foreach ($altOrder['tax_items'] ?? [] as $taxItem) {
+            $taxItems[] = new TaxItem(...$this->mapKeys($taxItem, ['name', 'amount', 'rate']));
         }
 
         $discountItems = [];
-        foreach ($entry->get('discount_items') ?? [] as $item) {
+        foreach ($altOrder['discount_items'] ?? [] as $item) {
             $discountItems[] = new DiscountItem(
-                id: $item['id'],
-                name: $item['name'],
-                amount: $item['amount'],
+                ...$this->mapKeys($item, ['id', 'name', 'amount', 'coupon_code']),
                 type: DiscountType::from($item['type']),
-                couponCode: $item['coupon_code'] ?? null,
             );
         }
 
         $notes = [];
-        foreach ($entry->get('notes') ?? [] as $note) {
+        foreach ($altOrder['notes'] ?? [] as $note) {
             $notes[] = new StatamicOrderNote(
-                id: $note['id'],
-                content: $note['content'],
-                userId: $note['user_id'],
-                userName: $note['user_name'],
+                ...$this->mapKeys($note, ['id', 'content', 'user_id', 'user_name']),
                 createdAt: Carbon::parse($note['created_at']),
             );
         }
 
         $logs = [];
-        foreach ($entry->get('logs') ?? [] as $log) {
+        foreach ($altOrder['logs'] ?? [] as $log) {
             $logs[] = new StatamicOrderLog(
                 id: $log['id'],
                 content: $log['content'],
@@ -201,46 +169,55 @@ class StatamicOrderFactory implements OrderFactory
             );
         }
 
+        $customer = User::query()->find($entry->get('customer_id'));
         $order = new StatamicOrder(
             id: $entry->id(),
-            customer: User::query()->find($entry->get('customer_id')),
-            status: OrderStatus::from($entry->get('order_status')),
-            currency: $entry->get('currency'),
-            orderNumber: $entry->get('order_number'),
+            customer: $customer,
+            status: OrderStatus::from($altOrder['order_status']),
+            currency: $altOrder['currency'],
+            orderNumber: $altOrder['order_number'],
             lineItems: $lineItems,
             taxItems: $taxItems,
             discountItems: $discountItems,
             deliveryItems: [],
             feeItems: [],
             billingItems: $billingItems,
-            subTotal: (int)$entry->get('sub_total'),
-            taxTotal: (int)$entry->get('tax_total'),
-            deliveryTotal: (int)$entry->get('delivery_total'),
-            discountTotal: (int)$entry->get('discount_total'),
-            feeTotal: (int)$entry->get('fee_total'),
-            total: (int)$entry->get('total'),
-            outstanding: (int)$entry->get('outstanding'),
-            orderDate: new DateTimeImmutable($entry->get('order_date')),
-            createdAt: new DateTimeImmutable($entry->get('created_at')),
-            basketId: $entry->get('basket_id'),
+            subTotal: $altOrder['sub_total'],
+            taxTotal: $altOrder['tax_total'],
+            deliveryTotal: $altOrder['delivery_total'],
+            discountTotal: $altOrder['discount_total'],
+            feeTotal: $altOrder['fee_total'],
+            total: $altOrder['total'],
+            outstanding: $altOrder['outstanding'],
+            orderDate: new DateTimeImmutable($altOrder['order_date']),
+            createdAt: new DateTimeImmutable($altOrder['created_at']),
+            basketId: $altOrder['basket_id'],
             billingAddress: new Address(
-                company: $entry->get('billing_company'),
-                fullName: $entry->get('billing_full_name'),
-                countryCode: $entry->get('billing_country_code'),
-                postalCode: $entry->get('billing_postcode'),
-                region: $entry->get('billing_region'),
-                locality: $entry->get('billing_locality'),
-                street: $entry->get('billing_street'),
-                phoneNumber: $entry->get('billing_phone_number'),
+                company: $altOrder['billing_company'],
+                fullName: $altOrder['billing_full_name'],
+                countryCode: $altOrder['billing_country_code'],
+                postalCode: $altOrder['billing_postcode'],
+                region: $altOrder['billing_region'],
+                locality: $altOrder['billing_locality'],
+                street: $altOrder['billing_street'],
+                phoneNumber: $altOrder['billing_phone_number'],
             ),
             transactions: $transactions,
             subscriptions: $subscriptions,
-            additional: $entry->get('additional') ?? [],
+            additional: Arr::except($altOrder->data()->toArray(), StatamicOrder::RESERVED_FIELDS),
         );
 
         $order->notes = $notes;
         $order->logs = $logs;
 
         return $order;
+    }
+
+    protected function mapKeys(array $array, array $only): array
+    {
+        return collect($array)
+            ->only($only)
+            ->mapWithKeys(fn($value, $key) => [Str::camel($key) => $value])
+            ->toArray();
     }
 }
