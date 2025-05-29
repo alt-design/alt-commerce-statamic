@@ -285,12 +285,11 @@ export default {
 
         // Fired after value has been committed
         this.$store.subscribe((mutation) => {
-
             if (mutation.type !== 'publish/order/setFieldValue') {
                 return
             }
 
-            if (mutation.payload.handle.includes(['items', 'coupon_code'])) {
+            if (['items', 'coupon_code'].includes(mutation.payload.handle)) {
                 this.recalculate()
             }
 

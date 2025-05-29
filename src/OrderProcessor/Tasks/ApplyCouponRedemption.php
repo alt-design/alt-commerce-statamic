@@ -3,7 +3,6 @@
 namespace AltDesign\AltCommerceStatamic\OrderProcessor\Tasks;
 
 
-use AltDesign\AltCommerce\Commerce\Order\Order;
 use AltDesign\AltCommerce\Enum\DiscountType;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use Illuminate\Bus\Queueable;
