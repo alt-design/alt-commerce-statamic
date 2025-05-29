@@ -3,6 +3,8 @@
 namespace AltDesign\AltCommerceStatamic\Http\Controllers;
 
 
+use App\Models\User;
+
 class CustomerLookupController
 {
     public function __invoke()
@@ -11,8 +13,6 @@ class CustomerLookupController
             'id' => 'required'
         ]);
 
-        $class = config('alt-commerce.customer');
-
-        return $class::findOrFail(request('id'))->toArray();
+        return User::findOrFail(request('id'))->toArray();
     }
 }

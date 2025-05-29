@@ -89,6 +89,7 @@ class OrderController
             'itemActionUrl' => cp_route('collections.entries.actions.run', 'orders'),
             'basketLookupUrl' => cp_route('alt-commerce::basket.lookup'),
             'productLookupUrl' => cp_route('alt-commerce::product.lookup'),
+            'customerLookupUrl' => cp_route('alt-commerce::customer.lookup'),
         ];
     }
 

@@ -23,13 +23,13 @@ export default {
             valuesMutable: null,
             basketLookupUrl: null,
             productLookupUrl: null,
+            customerLookupUrl: null,
             saveUrl: null,
             saveMethod: null,
             gatewayUrls: null,
             errors: {},
 
-            customerCache: {},
-            productCache: {},
+            entityCache: {},
             commitStoreCallback: null,
             axiosController: {},
         }
@@ -111,18 +111,39 @@ export default {
             }
         },
 
-        async grabProduct(id) {
-            if (this.productCache[id]) {
-                return this.productCache[id]
-            }
-            const {data} = await this.$axios.get(this.productLookupUrl, {params: {id: id}})
 
+        async grabEntity(type, id) {
+            const key = `${type}-${id}`
+            if (this.entityCache[key]) {
+                return this.entityCache[key]
+            }
+
+            let url;
+            if (type === 'customer') {
+                url = this.customerLookupUrl
+            } else if (type === 'product') {
+                url = this.productLookupUrl
+            }
+
+            if (!url) {
+                throw 'invalid entity type'
+            }
+
+
+            const {data} = await this.$axios.get(url, {params: {id}})
             if (!data) {
-                throw 'unable to find product with id: ' + id
+                throw `unable to find ${type} with id: ${id}`
             }
 
-            this.productCache[id] = data
+            this.entityCache[key] = data
             return data
+        },
+
+        async prefillCustomer(customerId) {
+            const customer = customerId ? await this.grabEntity('customer', customerId) : null
+            this.valuesMutable.customer_name = customer?.name
+            this.valuesMutable.customer_email = customer?.email
+
         },
 
         async prefillLineItems(payload) {
@@ -149,7 +170,7 @@ export default {
                 }
 
                 if (!item.price || prev?.product[0] !== item.product[0]) {
-                    const product = await this.grabProduct(item.product[0])
+                    const product = await this.grabEntity('product', item.product[0])
                     const pricing = (product.pricing ?? []).find(x => x.currency === this.values.currency)
                     item.price = pricing.amount
                 }
@@ -218,6 +239,7 @@ export default {
             this.valuesMutable = data.values
             this.basketLookupUrl = data.basketLookupUrl
             this.productLookupUrl = data.productLookupUrl
+            this.customerLookupUrl = data.customerLookupUrl
             this.loading = false
             this.itemActions = data.itemActions
             this.itemActionUrl = data.itemActionUrl
@@ -261,15 +283,19 @@ export default {
 
     beforeMount() {
 
-
         // Fired after value has been committed
         this.$store.subscribe((mutation) => {
-            if (mutation.type === 'publish/order/setFieldValue' && mutation.payload.handle === 'items') {
+
+            if (mutation.type !== 'publish/order/setFieldValue') {
+                return
+            }
+
+            if (mutation.payload.handle.includes(['items', 'coupon_code'])) {
                 this.recalculate()
             }
 
-            if (mutation.type === 'publish/order/setFieldValue' && mutation.payload.handle === 'coupon_code') {
-                this.recalculate()
+            if (mutation.payload.handle === 'customer_id') {
+                this.prefillCustomer(mutation.payload.value[0])
             }
         })
 
