@@ -43,11 +43,11 @@ class OrderProcessor
         $this->runStage(
             order: $order,
             tasks: $stage['tasks'] ?? [],
-            condition: $connection ?? $stage['condition'] ?? null,
+            condition: $stage['condition'] ?? null,
             stage: $stageName,
             profile: $profile,
             nextStage: $this->determineNextStage($config, $stageName),
-            connection: $stage['connection'] ?? 'default',
+            connection: $connection ?? $stage['connection'] ?? 'default',
             queue: $stage['queue'] ?? 'default',
             mode: $mode ?? $config['mode'] ?? 'manual',
         );
