@@ -28,8 +28,8 @@ class AddItems
         $lineItems = collect(request('items', []))
             ->filter(fn($item) => $item['type'] === 'line_item')
             ->filter(fn($item) => $item['quantity'] > 0)
-            ->filter(fn($item) => $item['price']  > 0)
-            ->filter(fn($item) => !!$item['product'][0]);
+            ->filter(fn($item) => ($item['price'] ?? 0)  > 0)
+            ->filter(fn($item) => !empty($item['product'][0]));
 
         foreach ($lineItems as $item) {
             $context->addToBasket(
@@ -44,7 +44,7 @@ class AddItems
                 CalculateLineItemTax::$skip[] = $lineItem->id;
                 $lineItem->taxRate = $item['tax_rate_manual'] ?? 0;
                 $lineItem->taxName = $item['tax_name_manual'] ?? '';
-                $lineItem->taxTotal = (floatval($item['tax_amount_manual']) ?? 0) * 100;
+                $lineItem->taxTotal = (floatval($item['tax_amount_manual'] ?? 0)) * 100;
             }
         }
 
