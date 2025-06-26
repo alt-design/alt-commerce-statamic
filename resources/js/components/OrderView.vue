@@ -93,6 +93,10 @@ export default {
                         return
                     }
                     const lineItem = data.lineItems.find(x => x.productId === item.product[0])
+                    if (!lineItem) {
+                        return
+                    }
+
                     item.tax_amount = lineItem.taxTotal / 100
                     item.tax_rate = lineItem.taxRate
                     item.tax_name = lineItem.taxName
@@ -103,7 +107,7 @@ export default {
                 if (this.$axios.isCancel(error) || error.name === 'CanceledError') {
                     return
                 }
-                console.log(error)
+                console.error(error)
                 this.valuesMutable.sub_total = null
                 this.valuesMutable.total = null
                 this.valuesMutable.tax_total = null
@@ -170,8 +174,9 @@ export default {
                 }
 
                 if (!item.price || prev?.product[0] !== item.product[0]) {
+                    const currency = this.valuesMutable.currency ?? this.values.currency;
                     const product = await this.grabEntity('product', item.product[0])
-                    const pricing = (product.pricing ?? []).find(x => x.currency === this.values.currency)
+                    const pricing = (product.pricing ?? []).find(x => x.currency === currency)
                     item.price = pricing.amount
                 }
 
@@ -331,6 +336,8 @@ export default {
     mounted() {
 
 
+
+        console.log('Mounting')
 
 
     },
