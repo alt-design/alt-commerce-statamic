@@ -198,7 +198,7 @@ class StatamicOrderFactory implements OrderFactory
 
         $order = new StatamicOrder(
             id: $entry->id(),
-            customerId: $altOrder['customer_id'],
+            customerId: $altOrder->originValue('customer_id'),
             customerName: $altOrder['customer_name'],
             customerEmail: $altOrder['customer_email'],
             status: OrderStatus::from($altOrder['order_status']),

@@ -167,6 +167,9 @@ class OrderController
                 street: $data['billing_street'] ?? null,
                 phoneNumber: $data['billing_phone_number'] ?? null,
             ),
+            additional: [
+                'payment_method' => 'manual'
+            ],
             orderId: $id,
             orderDate: Carbon::parse($data['order_date'])->toDateTimeImmutable()
         );

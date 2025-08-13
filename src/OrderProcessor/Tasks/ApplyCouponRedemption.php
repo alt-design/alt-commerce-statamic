@@ -44,8 +44,8 @@ class ApplyCouponRedemption implements ShouldQueue
                     'code' => $discountItem->couponCode,
                     'amount' => $discountItem->amount,
                     'currency' => $order->currency,
-                    'customer_id' => $order->customer->customerId(),
-                    'customer_email' => $order->customer->customerEmail(),
+                    'customer_id' => $order->customerId,
+                    'customer_email' => $order->customerEmail,
                     'order_id' => $order->id,
                 ])
                 ->save();
