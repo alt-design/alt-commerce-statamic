@@ -2,6 +2,7 @@
 
 namespace AltDesign\AltCommerceStatamic\Http\Controllers\Exports;
 
+use AltDesign\AltCommerce\Enum\OrderStatus;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
 use Carbon\Carbon;
@@ -37,10 +38,6 @@ class OrderItemExportController
             [
                 'title' => 'Customer Email',
                 'format' => fn($row) => $row['customer_email'],
-            ],
-            [
-                'title' => 'Customer Phone',
-                'format' => fn($row) => $row['customer_phone'],
             ],
             [
                 'title' => 'Country',
@@ -81,6 +78,10 @@ class OrderItemExportController
             [
                 'title' => 'Order number',
                 'format' => fn($row) => $row['order_number']
+            ],
+            [
+                'title' => 'VAT Number',
+                'format' => fn($row) => $row['vat_number']
             ]
         ];
     }
@@ -135,12 +136,11 @@ class OrderItemExportController
             foreach ($order->lineItems as $lineItem) {
                 for ($i = 0; $i < $lineItem->quantity; $i++) {
                     $rows[] = [
-                        'created_at' => $order->createdAt,
+                        'created_at' => $order->orderDate,
                         'product_name' => $lineItem->productName,
                         'company_name' => $order->billingAddress->company,
-                        'contact_name' => $order->billingAddress->fullName,
+                        'contact_name' => $order->customerName,
                         'customer_email' => $order->customerEmail,
-                        'customer_phone' => $order->additional['phone_number'] ?? null,
                         'country' => $order->billingAddress->countryCode,
                         'payment_method' => $order->additional['payment_method'] ?? null,
                         'currency' => $order->currency,
@@ -148,6 +148,7 @@ class OrderItemExportController
                         'discount_total' => $lineItem->discountTotal / $lineItem->quantity,
                         'discount_code' => $order->discountItems[0]->couponCode ?? null,
                         'order_number' => $order->orderNumber,
+                        'vat_number' => $order->additional['vat_number'] ?? null,
                         'tax_name' => $lineItem->taxName,
                         'tax_rate' => $lineItem->taxRate,
                         'tax_total' => $lineItem->taxTotal,
@@ -167,6 +168,7 @@ class OrderItemExportController
         return Entry::query()->where('collection', 'orders')
             ->when(request('date_from'), fn($query) => $query->where('created_at', '>=', Carbon::parse(request('date_from'))->startOfDay()))
             ->when(request('date_to'), fn($query) => $query->where('created_at', '<=', Carbon::parse(request('date_to'))->endOfDay()))
+            ->where('order_status', '=', OrderStatus::COMPLETE->value)
             ->get()
             ->map(fn($entry) => $this->orderFactory->fromEntry($entry))
             ->toArray();
