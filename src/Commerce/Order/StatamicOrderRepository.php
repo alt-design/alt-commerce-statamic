@@ -15,7 +15,7 @@ class StatamicOrderRepository implements OrderRepository
     public function __construct(
         protected StatamicOrderFactory         $orderFactory,
         protected OrderTransformer             $orderTransformer,
-        protected SequenceOrderNumberGenerator $sequenceOrderNumberGenerator
+        protected SequenceOrderNumberGenerator $sequenceOrderNumberGenerator,
     ) {}
 
     public function save(Order $order): void

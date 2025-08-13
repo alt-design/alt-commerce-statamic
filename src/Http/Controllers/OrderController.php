@@ -104,7 +104,9 @@ class OrderController
         $basket = Basket::context('cp-order')->current();
         $order = $this->orderRepository->find($orderId);
         $order->orderDate = Carbon::parse($data['order_date'])->toDateTimeImmutable();
-        $order->customer = User::query()->findOrFail($data['customer_id']);
+        $order->customerId = $data['customer_id'];
+        $order->customerName = $data['customer_name'];
+        $order->customerEmail = $data['customer_email'];
         $order->billingAddress = new Address(
             company: $data['billing_company'] ?? null,
             fullName: $data['billing_name'] ?? null,

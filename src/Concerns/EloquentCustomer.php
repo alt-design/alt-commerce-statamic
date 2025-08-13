@@ -19,22 +19,4 @@ trait EloquentCustomer
         return $this->email;
     }
 
-    public function findGatewayId(string $gateway): null|string
-    {
-        return $this->{"gateway_{$gateway}_id"} ?? null;
-    }
-
-    public function setGatewayId(string $gateway, string $gatewayId): void
-    {
-        $this->{"gateway_{$gateway}_id"} = $gatewayId;
-        $this->save();
-    }
-
-    public function customerAdditionalData(): array
-    {
-        if (isset($this->customerData) && is_array($this->customerData)) {
-            return $this->only($this->customerData);
-        }
-        return [];
-    }
 }

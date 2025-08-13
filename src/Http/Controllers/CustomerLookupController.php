@@ -3,16 +3,18 @@
 namespace AltDesign\AltCommerceStatamic\Http\Controllers;
 
 
-use App\Models\User;
+use AltDesign\AltCommerce\Contracts\CustomerRepository;
 
 class CustomerLookupController
 {
-    public function __invoke()
+    public function __invoke(CustomerRepository $customerRepository)
     {
         request()->validate([
             'id' => 'required'
         ]);
 
-        return User::findOrFail(request('id'))->toArray();
+        $customer = $customerRepository->find(request('id')) ?? throw new \Exception('Customer not found');
+
+        return $customer->toArray();
     }
 }

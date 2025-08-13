@@ -139,7 +139,7 @@ class OrderItemExportController
                         'product_name' => $lineItem->productName,
                         'company_name' => $order->billingAddress->company,
                         'contact_name' => $order->billingAddress->fullName,
-                        'customer_email' => $order->customer ? $order->customer->customerEmail() : null,
+                        'customer_email' => $order->customerEmail,
                         'customer_phone' => $order->additional['phone_number'] ?? null,
                         'country' => $order->billingAddress->countryCode,
                         'payment_method' => $order->additional['payment_method'] ?? null,

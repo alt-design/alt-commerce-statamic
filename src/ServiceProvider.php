@@ -8,6 +8,7 @@ use AltDesign\AltCommerce\Commerce\Basket\BasketManager;
 use AltDesign\AltCommerce\Commerce\Payment\GatewayBroker;
 use AltDesign\AltCommerce\Commerce\Pipeline\ValidateCouponPipeline;
 use AltDesign\AltCommerce\Contracts\CouponRepository;
+use AltDesign\AltCommerce\Contracts\CustomerRepository;
 use AltDesign\AltCommerce\Contracts\OrderFactory;
 use AltDesign\AltCommerce\Contracts\OrderRepository;
 use AltDesign\AltCommerce\Contracts\ProductRepository;
@@ -18,6 +19,7 @@ use AltDesign\AltCommerceStatamic\Commerce\Basket\Session\SessionBasketDriverFac
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\StatamicCouponRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateCustomerRedemptionLimit;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateRedemptionLimit;
+use AltDesign\AltCommerceStatamic\Commerce\Customer\StatamicCustomerRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Product\ProductFactory;
@@ -77,6 +79,7 @@ class ServiceProvider extends AddonServiceProvider
     public function register(): void
     {
         $this->app->singleton(Settings::class, Support\Settings::class);
+        $this->app->bind(CustomerRepository::class, StatamicCustomerRepository::class);
         $this->app->bind(CouponRepository::class, StatamicCouponRepository::class);
         $this->app->bind(ProductRepository::class, StatamicProductRepository::class);
         $this->app->bind(OrderRepository::class, StatamicOrderRepository::class);
@@ -84,6 +87,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->bind(OrderTransformer::class, BaseOrderTransformer::class);
         $this->app->bind(CurrencyConvertor::class, Support\CurrencyConvertor::class);
         $this->app->bind(VisitorLocator::class, Support\VisitorLocator::class);
+
         $this->app->singleton(BasketManager::class);
 
         $this->app->bind(Resolver::class, fn() => new class() implements Resolver {

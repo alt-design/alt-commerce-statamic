@@ -11,7 +11,6 @@ use AltDesign\AltCommerce\Commerce\Customer\Address;
 use AltDesign\AltCommerce\Commerce\Order\Order;
 use AltDesign\AltCommerce\Commerce\Billing\Subscription;
 use AltDesign\AltCommerce\Commerce\Payment\Transaction;
-use AltDesign\AltCommerce\Contracts\Customer;
 use AltDesign\AltCommerce\Enum\DiscountType;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderLog;
@@ -26,7 +25,6 @@ class BaseOrderTransformer implements OrderTransformer
 
     public function toEntryData(StatamicOrder $order): array
     {
-
 
         $items = [];
         foreach ($order->lineItems as $lineItem) {
@@ -55,17 +53,15 @@ class BaseOrderTransformer implements OrderTransformer
             }
         }
 
-
         return [
             'id' => $order->id,
             'title' => 'Order #'.$order->orderNumber,
             'created_at' => $order->createdAt->format('Y-m-d H:i:s'),
             'order_date' => $order->orderDate->format('Y-m-d H:i:s'),
             'basket_id' => $order->basketId,
-            'customer_id' => $order->customer?->customerId(),
-            'customer_email' => $order->customer?->customerEmail(),
-            'customer_name' => $order->billingAddress->fullName,
-            ...$order->customer ? $this->buildCustomerData($order->customer) : [],
+            'customer_id' => $order->customerId,
+            'customer_email' => $order->customerEmail,
+            'customer_name' => $order->customerName,
             'order_number' => $order->orderNumber,
             'order_status' => $order->status->value,
             'currency' => $order->currency,
@@ -184,13 +180,6 @@ class BaseOrderTransformer implements OrderTransformer
         }
 
         return $gatewayEntities;
-    }
-
-    protected function buildCustomerData(Customer $customer): array
-    {
-        return collect($customer->customerAdditionalData())
-            ->mapWithKeys(fn($value, $key) => ['customer_'.$key => $value])
-            ->toArray();
     }
 
     protected function buildAddress(string $prefix, Address|null $address): array
