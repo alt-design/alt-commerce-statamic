@@ -38,7 +38,8 @@ class BaseOrderTransformer implements OrderTransformer
                 'tax_rate' => $lineItem->taxRate,
                 'tax_amount' => $lineItem->taxTotal,
                 'type' => 'line_item',
-                'enabled' => true
+                'enabled' => true,
+                'options' => $lineItem->options,
             ];
         }
 

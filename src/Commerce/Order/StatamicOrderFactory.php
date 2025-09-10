@@ -130,12 +130,13 @@ class StatamicOrderFactory implements OrderFactory
                 productName: $lineItem['product_name'],
                 amount: $lineItem['amount'],
                 quantity: $lineItem['quantity'],
+                options: $lineItem['options'] ?? [],
                 discounts: $discounts,
                 discountTotal: $lineItem['discount_total'],
                 subTotal: $lineItem['sub_total'],
                 taxTotal: $lineItem['tax_total'],
                 taxRate: $lineItem['tax_rate'],
-                taxName: $lineItem['tax_name']
+                taxName: $lineItem['tax_name'],
             );
         }
 
