@@ -3,14 +3,14 @@
 namespace AltDesign\AltCommerceStatamic\Http\Controllers;
 
 use AltDesign\AltCommerce\Commerce\Customer\Address;
+use AltDesign\AltCommerceStatamic\Commerce\Customer\StatamicCustomerRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
+use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
 use AltDesign\AltCommerceStatamic\Facades\Basket;
 use AltDesign\AltCommerceStatamic\Support\GatewayUrlGenerator;
 use AltDesign\AltCommerceStatamic\Support\SequenceOrderNumberGenerator;
 use AltDesign\AltCommerceStatamic\Support\Settings;
-use App\Commerce\OrderTransformer;
-use App\Models\User;
 use Carbon\Carbon;
 use League\ISO3166\ISO3166;
 use Ramsey\Uuid\Uuid;
@@ -34,6 +34,7 @@ class OrderController
         protected GatewayUrlGenerator     $gatewayUrlGenerator,
         protected Settings                $settings,
         protected SequenceOrderNumberGenerator $sequenceOrderNumberGenerator,
+        protected StatamicCustomerRepository $customerRepository,
     )
     {
         $this->collection = Collection::find('orders');
@@ -100,7 +101,6 @@ class OrderController
         $fields->validate();
         $data = $fields->process()->values();
 
-
         $basket = Basket::context('cp-order')->current();
         $order = $this->orderRepository->find($orderId);
         $order->orderDate = Carbon::parse($data['order_date'])->toDateTimeImmutable();
@@ -156,7 +156,7 @@ class OrderController
         $order = $this->orderFactory->createFromBasket(
             orderNumber: $orderNumber,
             basket: Basket::context('cp-order')->current(),
-            customer: User::query()->findOrFail($data['customer_id']),
+            customer: $this->customerRepository->find($data['customer_id']) ?? throw new \Exception('Unable to find customer with id '.$data['customer_id']),
             billingAddress: new Address(
                 company: $data['billing_company'] ?? null,
                 fullName: $data['billing_name'] ?? null,

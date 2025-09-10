@@ -3,6 +3,7 @@
 namespace AltDesign\AltCommerceStatamic\Support;
 
 use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrder;
+use Illuminate\Support\Str;
 
 class GatewayUrlGenerator
 {
@@ -10,6 +11,7 @@ class GatewayUrlGenerator
     {
         return match($gateway) {
             'braintree' => $this->braintreeUrl($type, $id),
+            'stripe' => $this->stripeUrl($type, $id),
             default => throw new \Exception("Gateway $gateway is not supported")
         };
     }
@@ -32,6 +34,17 @@ class GatewayUrlGenerator
             ];
         }
         return $gatewayUrls;
+    }
+
+    protected function stripeUrl(string $type, string $id): string
+    {
+        $isTest = Str::contains(config('alt-commerce.payment_gateways.available.stripe.secret_key'), 'sk_test');
+
+        if ($isTest) {
+            return "https://dashboard.stripe.com/test/payments/{$id}";
+        }
+
+        return "https://dashboard.stripe.com/payments/{$id}";
     }
 
     protected function braintreeUrl(string $type, string $id): string
