@@ -133,6 +133,7 @@ class BaseOrderTransformer implements OrderTransformer
                     'tax_total' => $lineItem->taxTotal,
                     'tax_rate' => $lineItem->taxRate,
                     'tax_name' => $lineItem->taxName,
+                    'options' => $lineItem->options,
                 ])
                 ->toArray(),
             'billing_items' => collect($order->billingItems)
