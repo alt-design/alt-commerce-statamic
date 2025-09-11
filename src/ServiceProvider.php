@@ -15,7 +15,7 @@ use AltDesign\AltCommerce\Contracts\ProductRepository;
 use AltDesign\AltCommerce\Contracts\Resolver;
 use AltDesign\AltCommerce\Contracts\Settings;
 use AltDesign\AltCommerce\Contracts\VisitorLocator;
-use AltDesign\AltCommerceStatamic\Commerce\Basket\Session\SessionBasketDriverFactory;
+use AltDesign\AltCommerce\Services\PriceCalculatorService\Service as PriceCalculatorService;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\StatamicCouponRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateCustomerRedemptionLimit;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateRedemptionLimit;
@@ -29,7 +29,6 @@ use AltDesign\AltCommerceStatamic\Contracts\CurrencyConvertor;
 use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
 use AltDesign\AltCommerceStatamic\CP\Actions\AddOrderNote;
 use AltDesign\AltCommerceStatamic\CP\Actions\DeleteOrderNote;
-use AltDesign\AltCommerceStatamic\CP\Actions\ProcessOrder;
 use AltDesign\AltCommerceStatamic\CP\Actions\UpdateOrderStatusToRefunded;
 use AltDesign\AltCommerceStatamic\Fieldtypes\MultiCurrencyPricing;
 use AltDesign\AltCommerceStatamic\Fieldtypes\TaxRateSelector;
@@ -89,6 +88,11 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->bind(VisitorLocator::class, Support\VisitorLocator::class);
 
         $this->app->singleton(BasketManager::class);
+        $this->app->singleton(PriceCalculatorService::class, fn($app) =>
+            new PriceCalculatorService(
+                $app->make(Settings::class)->defaultTaxRate()
+            )
+        );
 
         $this->app->bind(Resolver::class, fn() => new class() implements Resolver {
             public function resolve(string $abstract, array $with = []): mixed

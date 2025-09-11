@@ -97,7 +97,13 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 
     public function blueprint(): mixed
     {
-        return $this->blueprintRepository->setDirectory(__DIR__ . '/../../resources/blueprints')->find('settings');
+        $dir = __DIR__ . '/../../resources/blueprints';
+        if (file_exists(resource_path('blueprints/vendor/alt-commerce/settings.yaml'))) {
+            $dir = resource_path('blueprints/vendor/alt-commerce');
+        }
+        return $this->blueprintRepository
+            ->setDirectory($dir)
+            ->find('settings');
     }
 
     protected function load()
