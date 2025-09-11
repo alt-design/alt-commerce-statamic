@@ -45,6 +45,16 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
         return $this->settings['supported_currencies'] ?? ['GBP'];
     }
 
+    public function pricesInclusive(): bool
+    {
+        return $this->settings['prices_inclusive'] ?? false;
+    }
+
+    public function defaultTaxRate(): float
+    {
+        return $this->settings['default_tax_rate'] ?? 0.2;
+    }
+
     public function orderNumberStartSequence(): string
     {
         return $this->settings['order_number_start_sequence'] ?? '00001';
