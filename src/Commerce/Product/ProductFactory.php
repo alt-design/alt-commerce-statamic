@@ -13,6 +13,7 @@ use AltDesign\AltCommerce\Support\Duration;
 use AltDesign\AltCommerceStatamic\Concerns\HasGatewayEntities;
 use AltDesign\AltCommerceStatamic\Contracts\CurrencyConvertor;
 use AltDesign\AltCommerceStatamic\Support\Settings;
+use League\ISO3166\ISO3166;
 use Statamic\Entries\Entry;
 use Statamic\Fields\Value;
 
@@ -109,7 +110,7 @@ class ProductFactory
         foreach ($taxRule['rates'] as $rate) {
             $countries = [];
             foreach ($rate['country_filter'] ?? [] as $country) {
-                $countries[] = $country->extra()['iso2'];
+                $countries[] = $this->parseCountryCode($country);
             }
             $compiled[] = new TaxRule(
                 name: $taxRule['name'],
@@ -120,6 +121,14 @@ class ProductFactory
 
         return $compiled;
 
+    }
+
+    protected function parseCountryCode(string $code): string
+    {
+        if (strlen($code) === 3) {
+            $code = (new ISO3166)->alpha3($code)['alpha2'];
+        }
+        return $code;
     }
 
     protected function getTaxRule($id): ?array
