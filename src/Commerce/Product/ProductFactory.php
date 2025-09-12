@@ -45,7 +45,7 @@ class ProductFactory
 
     protected function pricingSchema(Entry $entry): PricingSchema
     {
-        if ($entry->get('billing_type') === 'single') {
+        if ($entry->get('billing_type') === 'single' || empty($entry->get('billing_type'))) {
             return new FixedPriceSchema(
                 prices: $this->priceCollectionFactory->create($entry->get('pricing')),
             );
