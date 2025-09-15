@@ -65,11 +65,6 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
         return $this->settings['order_number_prefix'];
     }
 
-    public function currentOrderNumber(): int
-    {
-        return $this->settings['current_order_number'] ?? 0;
-    }
-
     public function taxRules(): array
     {
         return $this->settings['tax_rules'] ?? [];
