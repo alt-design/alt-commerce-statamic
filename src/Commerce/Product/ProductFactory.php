@@ -45,9 +45,20 @@ class ProductFactory
 
     protected function pricingSchema(Entry $entry): PricingSchema
     {
-        if ($entry->get('billing_type') === 'single') {
+        if ($entry->get('billing_type') === 'single' || empty($entry->get('billing_type'))) {
+
+            $deposit = collect($entry->get('deposit'))->mapWithKeys(fn ($value) => [$value['currency'] => $value['amount']])->toArray();
+            $pricing = [];
+            foreach ($entry->get('pricing') as $item) {
+                $depositAmount = $deposit[$item['currency']] ?? null;
+                $pricing[] = [
+                    'amount' => $depositAmount ?? $item['amount'],
+                    'currency' => $item['currency'],
+                ];
+            }
+
             return new FixedPriceSchema(
-                prices: $this->priceCollectionFactory->create($entry->get('pricing')),
+                prices: $this->priceCollectionFactory->create($pricing),
             );
         }
 
