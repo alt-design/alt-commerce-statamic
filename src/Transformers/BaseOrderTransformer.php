@@ -39,7 +39,7 @@ class BaseOrderTransformer implements OrderTransformer
                 'tax_amount' => $lineItem->taxTotal,
                 'type' => 'line_item',
                 'enabled' => true,
-                'options' => $lineItem->options,
+                'options' => $this->buildLineItemOptions($lineItem),
             ];
         }
 
@@ -133,7 +133,7 @@ class BaseOrderTransformer implements OrderTransformer
                     'tax_total' => $lineItem->taxTotal,
                     'tax_rate' => $lineItem->taxRate,
                     'tax_name' => $lineItem->taxName,
-                    'options' => $lineItem->options,
+                    'options' => $this->buildLineItemOptions($lineItem),
                 ])
                 ->toArray(),
             'billing_items' => collect($order->billingItems)
@@ -172,6 +172,13 @@ class BaseOrderTransformer implements OrderTransformer
             'items' => $items,
             ...$order->additional,
         ];
+    }
+
+    protected function buildLineItemOptions(LineItem $lineItem): array
+    {
+        return collect($lineItem->options)
+            ->mapWithKeys(fn($val, $key) => [$key => is_array($val) ? json_encode($val) : $val])
+            ->toArray();
     }
 
     protected function buildGatewayEntities(Order $order): array

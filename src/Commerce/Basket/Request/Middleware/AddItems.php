@@ -3,7 +3,7 @@
 namespace AltDesign\AltCommerceStatamic\Commerce\Basket\Request\Middleware;
 
 use AltDesign\AltCommerce\Commerce\Basket\BasketContext;
-use App\Commerce\CalculateLineItemTax;
+use AltDesign\AltCommerce\Commerce\Pipeline\RecalculateBasket\CalculateLineItemTax;
 
 class AddItems
 {
@@ -23,6 +23,7 @@ class AddItems
             'items.*.tax_amount_manual' => 'nullable',
             'items.*.discount_amount' => 'nullable',
             'items.*.discount_name' => 'nullable|string',
+            'items.*.options' => 'sometimes|array',
         ]);
 
         $lineItems = collect(request('items', []))
@@ -36,6 +37,7 @@ class AddItems
                 productId: $item['product'][0],
                 quantity: $item['quantity'],
                 price: floatval($item['price']) * 100,
+                options: $item['options'] ?? [],
             );
 
             $lineItem = $context->find($item['product'][0]);
