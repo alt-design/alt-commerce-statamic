@@ -218,8 +218,8 @@ class StatamicOrderFactory implements OrderFactory
             feeTotal: $altOrder['fee_total'],
             total: $altOrder['total'],
             outstanding: $altOrder['outstanding'],
-            orderDate: new DateTimeImmutable($altOrder['order_date']),
-            createdAt: new DateTimeImmutable($altOrder['created_at']),
+            orderDate: new DateTimeImmutable($altOrder->originValue('order_date')),
+            createdAt: new DateTimeImmutable($altOrder->originValue('created_at')),
             basketId: $altOrder['basket_id'],
             billingAddress: new Address(
                 company: $altOrder['billing_company'],
