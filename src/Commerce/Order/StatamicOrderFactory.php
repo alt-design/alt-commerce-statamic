@@ -231,6 +231,18 @@ class StatamicOrderFactory implements OrderFactory
                 street: $altOrder['billing_street'],
                 phoneNumber: $altOrder['billing_phone_number'],
             ),
+            shippingAddress: !empty($altOrder['shipping_postcode']) ?
+                new Address(
+                    company: $altOrder['shipping_company'],
+                    fullName: $altOrder['shipping_full_name'],
+                    countryCode: $altOrder['shipping_country_code'],
+                    postalCode: $altOrder['shipping_postcode'],
+                    region: $altOrder['shipping_region'],
+                    locality: $altOrder['shipping_locality'],
+                    street: $altOrder['shipping_street'],
+                    phoneNumber: $altOrder['shipping_phone_number'],
+                )
+                : null,
             transactions: $transactions,
             subscriptions: $subscriptions,
             additional: Arr::except($altOrder->data()->toArray(), StatamicOrder::RESERVED_FIELDS),
