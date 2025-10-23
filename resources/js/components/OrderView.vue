@@ -360,33 +360,26 @@ export default {
                         @completed="actionCompleted"
                     />
                 </dropdown-list>
-                <slot name="action-buttons">
+                <div class="flex gap-x-1">
+                    <slot name="action-buttons-prefix"/>
                     <button type="submit" class="btn-primary" @click="submit">
                         Save
                     </button>
-                </slot>
+                </div>
             </div>
 
-            <slot name="top"/>
+            <publish-tabs
+                @updated="setFieldValue"
+                @meta-updated="setFieldMeta"
+            :enable-sidebar="true"/>
 
-            <slot name="form">
-                <publish-tabs
-                    @updated="setFieldValue"
-                    @meta-updated="setFieldMeta"
-                :enable-sidebar="true"/>
-            </slot>
 
-            <slot name="order-transactions">
-                <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
-            </slot>
+            <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
 
-            <slot name="order-notes">
-                <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" />
-            </slot>
+            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" />
 
-            <slot name="order-logs">
-                <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
-            </slot>
+            <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
+
 
         </div>
     </publish-container>
