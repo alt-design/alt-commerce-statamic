@@ -361,7 +361,7 @@ export default {
                     />
                 </dropdown-list>
                 <div class="flex gap-x-1">
-                    <slot name="action-buttons-prefix"/>
+                    <slot name="action-buttons-prefix" :data="$data"/>
                     <button type="submit" class="btn-primary" @click="submit">
                         Save
                     </button>
