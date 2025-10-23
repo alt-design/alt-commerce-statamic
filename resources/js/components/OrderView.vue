@@ -332,15 +332,6 @@ export default {
 
         this.$axios.get(this.endpoint).then(({data}) => this.setup(data))
     },
-
-    mounted() {
-
-
-
-        console.log('Mounting')
-
-
-    },
 }
 </script>
 <template>
@@ -369,22 +360,33 @@ export default {
                         @completed="actionCompleted"
                     />
                 </dropdown-list>
-                <button type="submit" class="btn-primary" @click="submit">
-                    Save
-                </button>
+                <slot name="action-buttons">
+                    <button type="submit" class="btn-primary" @click="submit">
+                        Save
+                    </button>
+                </slot>
             </div>
 
-            <publish-tabs
-                @updated="setFieldValue"
-                @meta-updated="setFieldMeta"
-            :enable-sidebar="true"/>
+            <slot name="top"/>
 
+            <slot name="form">
+                <publish-tabs
+                    @updated="setFieldValue"
+                    @meta-updated="setFieldMeta"
+                :enable-sidebar="true"/>
+            </slot>
 
-            <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
+            <slot name="order-transactions">
+                <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
+            </slot>
 
-            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" />
+            <slot name="order-notes">
+                <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" />
+            </slot>
 
-            <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
+            <slot name="order-logs">
+                <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
+            </slot>
 
         </div>
     </publish-container>
