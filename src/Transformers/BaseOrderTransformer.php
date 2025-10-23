@@ -168,6 +168,7 @@ class BaseOrderTransformer implements OrderTransformer
                 ->toArray(),
             'gateway_entities' => $this->buildGatewayEntities($order),
             ...$this->buildAddress('billing', $order->billingAddress),
+            ...$this->buildAddress('shipping', $order->shippingAddress),
             'coupon_code' => collect($order->discountItems)->first(fn(DiscountItem $item) => $item->type === DiscountType::PRODUCT_COUPON)?->couponCode,
             'items' => $items,
             ...$order->additional,
@@ -193,6 +194,10 @@ class BaseOrderTransformer implements OrderTransformer
 
     protected function buildAddress(string $prefix, Address|null $address): array
     {
+        if (! $address) {
+            return [];
+        }
+
         $countryCode = $address?->countryCode;
         if ($countryCode && strlen($countryCode) === 2) {
             $countryCode = (new ISO3166)->alpha2($countryCode)['alpha3'];
