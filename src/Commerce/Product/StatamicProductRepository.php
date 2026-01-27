@@ -12,9 +12,18 @@ class StatamicProductRepository implements ProductRepository
 {
     use HasGatewayEntities;
 
+    public function __construct(protected ProductFactory $factory)
+    {
+    }
+
     public function find(string $productId): ?Product
     {
-        return $this->query()->find($productId);
+        $entry = Entry::query()
+            ->where('collection', 'products')
+            ->where('id', $productId)
+            ->first();
+
+        return $entry ? $this->factory->make($entry) : null;
     }
 
     public function query(): ProductQueryBuilder
@@ -43,7 +52,7 @@ class StatamicProductRepository implements ProductRepository
             id: $billingPlan->id,
             gatewayEntities: $billingPlan->gatewayEntities,
         );
-       // }
+        // }
 
         $entry->saveQuietly();
 
