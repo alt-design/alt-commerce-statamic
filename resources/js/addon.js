@@ -1,6 +1,7 @@
 import TaxRateSelector from "./fieldtypes/TaxRateSelector.vue";
 import MultiCurrencyPricing from "./fieldtypes/MultiCurrencyPricing.vue";
 import OrderView from "./components/OrderView.vue"
+import SettingsForm from "./components/SettingsForm.vue"
 import Money from "./fieldtypes/Money.vue";
 
 Statamic.booting(() => {
@@ -9,4 +10,5 @@ Statamic.booting(() => {
     Statamic.$components.register('multi_currency_pricing-fieldtype', MultiCurrencyPricing)
     Statamic.$components.register('money-fieldtype', Money)
     Statamic.$components.register('order-view', OrderView)
+    Statamic.$components.register('alt-commerce-settings-form', SettingsForm)
 });

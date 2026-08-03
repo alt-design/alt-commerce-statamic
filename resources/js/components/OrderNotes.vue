@@ -1,7 +1,9 @@
 <script>
+import { ConfirmationModal } from '@statamic/cms/ui';
 
 export default {
 
+    components: { ConfirmationModal },
     emits: ['deleteNote'],
     props: {
         notes: {
@@ -69,7 +71,7 @@ export default {
         </div>
     </div>
 
-    <confirmation-modal
+    <ConfirmationModal
         v-if="showConfirmationModal"
         title="Delete Note"
         :danger="true"
@@ -85,19 +87,19 @@ export default {
 
 <style scoped>
 .order-notes {
-    @apply p-6;
-
-    .note-list {
-        @apply divide-y;
-    }
-
-    :deep p {
-        @apply py-1;
-    }
-
-    .author {
-        @apply flex gap-x-2 text-sm items-baseline;
-    }
-
+    padding: 1.5rem;
+}
+.order-notes .note-list > * + * {
+    border-top: 1px solid rgb(0 0 0 / 0.1);
+}
+.order-notes :deep(p) {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+.order-notes .author {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    align-items: baseline;
 }
 </style>

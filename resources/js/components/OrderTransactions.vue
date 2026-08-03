@@ -46,9 +46,9 @@ const props = defineProps(['transactions', 'gatewayUrls', 'currency'])
 
 <style scoped>
 td a {
-    @apply underline decoration-dotted;
+    text-decoration: underline dotted;
 }
 td {
-    @apply p-2;
+    padding: 0.5rem;
 }
 </style>

@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import vue from '@vitejs/plugin-vue2';
-import path from 'path';
+import statamic from '@statamic/cms/vite-plugin';
 
 export default defineConfig({
     plugins: [
+        statamic(),
         laravel({
             input: [
                 'resources/js/addon.js',
@@ -12,11 +12,5 @@ export default defineConfig({
             ],
             publicDirectory: 'resources/dist',
         }),
-        vue(),
     ],
-    resolve: {
-        alias: {
-            'statamic': path.resolve(__dirname, 'vendor/statamic/cms/resources/js'),
-        },
-    },
 });

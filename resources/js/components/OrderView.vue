@@ -1,11 +1,24 @@
 <script>
-import HasActions from 'statamic/components/publish/HasActions';
+import { HasActionsMixin, ItemActions } from '@statamic/cms';
+import { PublishContainer, PublishTabs, Button, Dropdown, DropdownMenu, DropdownItem } from '@statamic/cms/ui';
 import OrderNotes from "./OrderNotes.vue";
 import OrderLogs from "./OrderLogs.vue";
 import OrderTransactions from "./OrderTransactions.vue";
+
 export default {
-    mixins: [HasActions],
-    components: {OrderTransactions, OrderLogs, OrderNotes},
+    mixins: [HasActionsMixin],
+    components: {
+        PublishContainer,
+        PublishTabs,
+        Button,
+        Dropdown,
+        DropdownMenu,
+        DropdownItem,
+        ItemActions,
+        OrderTransactions,
+        OrderLogs,
+        OrderNotes,
+    },
     props: [
         'endpoint'
     ],
@@ -21,16 +34,18 @@ export default {
             meta: null,
             values: null,
             valuesMutable: null,
+            lastValues: null,
             basketLookupUrl: null,
             productLookupUrl: null,
             customerLookupUrl: null,
             saveUrl: null,
             saveMethod: null,
             gatewayUrls: null,
+            itemActions: null,
+            itemActionUrl: null,
             errors: {},
 
             entityCache: {},
-            commitStoreCallback: null,
             axiosController: {},
         }
     },
@@ -51,7 +66,7 @@ export default {
 
                 this.$toast.success('Order Saved', {duration: 3000});
 
-                this.$dirty.disableWarning()
+                this.$refs.container?.clearDirtyState()
 
                 if (this.isCreating) {
                     window.location.href = '/cp/collections/orders/entries/' + data.id
@@ -64,6 +79,31 @@ export default {
                 } else {
                     this.$toast.error('An unknown error occurred.');
                 }
+            }
+        },
+
+        // Replaces the v5 Vuex store subscription: the publish container emits full
+        // values on every field commit, so changed handles are found by diffing.
+        async onValuesUpdated(values) {
+            const prev = this.lastValues ?? {}
+            this.valuesMutable = values
+
+            const itemsChanged = JSON.stringify(values.items) !== JSON.stringify(prev.items)
+            const couponChanged = values.coupon_code !== prev.coupon_code
+            const customerChanged = JSON.stringify(values.customer_id) !== JSON.stringify(prev.customer_id)
+
+            this.lastValues = JSON.parse(JSON.stringify(values))
+
+            if (itemsChanged) {
+                await this.prefillLineItems(values.items, prev.items ?? [])
+            }
+
+            if (itemsChanged || couponChanged) {
+                this.recalculate()
+            }
+
+            if (customerChanged) {
+                this.prefillCustomer(values.customer_id?.[0])
             }
         },
 
@@ -150,16 +190,16 @@ export default {
 
         },
 
-        async prefillLineItems(payload) {
+        async prefillLineItems(items, prevItems) {
 
-            for (let i in payload.value) {
+            for (let i in items) {
 
-                const item = payload.value[i]
+                const item = items[i]
                 if (item.type !== 'line_item') {
                     continue;
                 }
 
-                const prev = this.valuesMutable.items[i] ?? null
+                const prev = prevItems[i] ?? null
 
                 if (!item.product.length) {
                     item.price = null
@@ -221,15 +261,6 @@ export default {
                 });
         },
 
-        async commitStore(type, payload, options) {
-            if (type === 'publish/order/setFieldValue') {
-                if (payload.handle === 'items') {
-                    await this.prefillLineItems(payload)
-                }
-            }
-            return this.commitStoreCallback.call(this, type, payload, options);
-        },
-
         async setup(data) {
 
             this.id = data.id
@@ -242,6 +273,7 @@ export default {
             this.saveUrl = data.saveUrl
             this.values = data.values
             this.valuesMutable = data.values
+            this.lastValues = JSON.parse(JSON.stringify(data.values))
             this.basketLookupUrl = data.basketLookupUrl
             this.productLookupUrl = data.productLookupUrl
             this.customerLookupUrl = data.customerLookupUrl
@@ -266,46 +298,10 @@ export default {
 
             this.blueprint = blueprint
         },
-
-        extractFields(blueprint) {
-
-            const fields = []
-            blueprint.tabs.forEach(tab => {
-
-                tab.sections.forEach(section => {
-
-                    section.fields.forEach(field => {
-                        fields.push(field)
-                    })
-                })
-            })
-
-            return fields
-
-        }
     },
 
 
     beforeMount() {
-
-        // Fired after value has been committed
-        this.$store.subscribe((mutation) => {
-            if (mutation.type !== 'publish/order/setFieldValue') {
-                return
-            }
-
-            if (['items', 'coupon_code'].includes(mutation.payload.handle)) {
-                this.recalculate()
-            }
-
-            if (mutation.payload.handle === 'customer_id') {
-                this.prefillCustomer(mutation.payload.value[0])
-            }
-        })
-
-        // Fired before value has been committed
-        this.commitStoreCallback = this.$store.commit
-        this.$store.commit = this.commitStore
 
         Statamic.$callbacks.add('orderActionRan', (data) => {
             data.actions.forEach((action) => {
@@ -335,16 +331,16 @@ export default {
 }
 </script>
 <template>
-    <publish-container
+    <PublishContainer
         v-if="!loading"
         ref="container"
         :blueprint="blueprint"
-        v-model="valuesMutable"
+        :model-value="valuesMutable"
+        @update:model-value="onValuesUpdated"
         :meta="meta"
         name="order"
-        :key="this.id"
+        :key="id"
         :errors="errors"
-        v-slot="{ setFieldValue, setFieldMeta }"
     >
         <div>
             <div class="flex items-center mb-6">
@@ -352,26 +348,36 @@ export default {
                     <template v-if="!isCreating">Edit Order {{ values.order_number }}</template>
                     <template v-else>Create order</template>
                 </h1>
-                <dropdown-list v-if="itemActions">
-                    <data-list-inline-actions
-                        :actions="itemActions"
-                        :item="id"
-                        :url="itemActionUrl"
-                        @completed="actionCompleted"
-                    />
-                </dropdown-list>
+                <ItemActions
+                    v-if="itemActions"
+                    :url="itemActionUrl"
+                    :actions="itemActions"
+                    :item="id"
+                    @completed="actionCompleted"
+                    v-slot="{ actions }"
+                >
+                    <Dropdown>
+                        <template #trigger>
+                            <Button icon="dots-horizontal" icon-only :aria-label="__('Actions')" />
+                        </template>
+                        <DropdownMenu>
+                            <DropdownItem
+                                v-for="action in actions"
+                                :key="action.handle"
+                                :text="__(action.title)"
+                                :variant="action.dangerous ? 'destructive' : 'default'"
+                                @click="action.run"
+                            />
+                        </DropdownMenu>
+                    </Dropdown>
+                </ItemActions>
                 <div class="flex gap-x-1">
                     <slot name="action-buttons-prefix" :data="$data"/>
-                    <button type="submit" class="btn-primary" @click="submit">
-                        Save
-                    </button>
+                    <Button variant="primary" @click="submit">Save</Button>
                 </div>
             </div>
 
-            <publish-tabs
-                @updated="setFieldValue"
-                @meta-updated="setFieldMeta"
-            :enable-sidebar="true"/>
+            <PublishTabs />
 
 
             <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
@@ -382,14 +388,16 @@ export default {
 
 
         </div>
-    </publish-container>
+    </PublishContainer>
 
 </template>
 <style scoped>
 td {
-    @apply p-2 text-lg;
+    padding: 0.5rem;
+    font-size: 1.125rem;
 }
 td:last-child {
-    @apply font-bold pl-8;
+    font-weight: 700;
+    padding-left: 2rem;
 }
 </style>

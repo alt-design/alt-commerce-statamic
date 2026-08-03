@@ -1,7 +1,7 @@
 @extends('statamic::layout')
 
 @section('content')
-    <div id="alt-google-2fa">
+    <div>
         <!-- Header Content -->
         <section>
             <h1 class="mb-2">Alt Commerce</h1>
@@ -11,14 +11,14 @@
         <!-- End Header Content -->
 
         <div>
-            <publish-form
+            <alt-commerce-settings-form
                     action="{{ cp_route('alt-commerce.settings.update') }}"
                     :blueprint='@json($blueprint)'
                     :meta='@json($meta)'
                     :values='@json($values)'
             >
 
-            </publish-form>
+            </alt-commerce-settings-form>
         </div>
     </div>
 @endsection
