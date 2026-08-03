@@ -224,6 +224,42 @@ export default {
             }
         },
 
+        async addNote({content, resolve}) {
+            const payload = {
+                action: 'add_order_note',
+                context: {
+                    collection: 'orders',
+                    view: 'form'
+                },
+                selections: [this.id],
+                values: {
+                    note: content
+                }
+            };
+
+            try {
+                const {data} = await this.$axios.post(this.itemActionUrl, payload);
+
+                if (data?.success === false) {
+                    this.$toast.error(data?.message ?? 'Unable to add note.');
+                    return;
+                }
+
+                const actions = data?.callback?.[1]?.actions ?? [];
+                actions.forEach((action) => {
+                    if (action.type === 'note-added') {
+                        this.notes.unshift(JSON.parse(action.note));
+                    }
+                });
+
+                this.$toast.success(data?.message ?? 'Note has been added');
+            } catch (error) {
+                this.$toast.error(error?.response?.data?.message ?? 'Unable to add note.');
+            } finally {
+                resolve();
+            }
+        },
+
         async deleteNote({note, resolve}) {
             const payload = {
                 action: 'delete_order_note',
@@ -278,7 +314,10 @@ export default {
             this.productLookupUrl = data.productLookupUrl
             this.customerLookupUrl = data.customerLookupUrl
             this.loading = false
-            this.itemActions = data.itemActions
+            // Note actions run from the notes panel, not the dropdown.
+            this.itemActions = (data.itemActions ?? []).filter(
+                (action) => !['add_order_note', 'delete_order_note'].includes(action.handle)
+            )
             this.itemActionUrl = data.itemActionUrl
 
             const blueprint = data.blueprint;
@@ -382,7 +421,7 @@ export default {
 
             <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
 
-            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" />
+            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" @addNote="addNote" />
 
             <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
 
