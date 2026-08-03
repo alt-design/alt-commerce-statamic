@@ -37,6 +37,7 @@ use AltDesign\AltCommerceStatamic\Tags\Price;
 use AltDesign\AltCommerceStatamic\Transformers\BaseOrderTransformer;
 use Illuminate\Support\Facades\File;
 use Statamic\Facades\CP\Nav;
+use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Stache\Stache;
 use Statamic\Statamic;
@@ -124,6 +125,12 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootAddon(): void
     {
+        // Statamic 6 drops nav items gated on unregistered permissions,
+        // even for super users, so the permission must be registered.
+        Permission::extend(function () {
+            Permission::register('view alt-commerce')->label('View Alt Commerce');
+        });
+
         Nav::extend(function ($nav) {
             $nav->content('Alt Commerce')
                 ->section('Settings')
