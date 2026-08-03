@@ -19,20 +19,43 @@ class SessionBasketDriver implements BasketDriver
 
     }
 
+    protected ?Basket $basket = null;
+
     public function save(Basket $basket): void
     {
-        Session::put($this->sessionKey, $basket);
+        // Serialized manually so the basket survives Laravel's `json` session
+        // serialization (the default since Laravel 13), which would otherwise
+        // round-trip the object into an array.
+        $this->basket = $basket;
+        Session::put($this->sessionKey, serialize($basket));
     }
 
     public function delete(): void
     {
+        $this->basket = null;
         Session::remove($this->sessionKey);
     }
 
     public function get(): Basket
     {
+        // Actions mutate the basket returned here and rely on RecalculateBasketAction
+        // saving that same instance, so the unserialized basket must be memoized for
+        // the remainder of the request.
+        if ($this->basket) {
+            return $this->basket;
+        }
+
         try {
-            return Session::get($this->sessionKey, fn() => $this->create());
+            $data = Session::get($this->sessionKey);
+
+            if (is_string($data)) {
+                $basket = unserialize($data);
+                if ($basket instanceof Basket) {
+                    return $this->basket = $basket;
+                }
+            }
+
+            return $this->create();
         }
         catch (\Throwable $e) {
             Log::error($e);
