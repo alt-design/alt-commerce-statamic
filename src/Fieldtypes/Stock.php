@@ -5,6 +5,7 @@ namespace AltDesign\AltCommerceStatamic\Fieldtypes;
 use AltDesign\AltCommerce\Contracts\StockRepository;
 use AltDesign\AltCommerce\Enum\StockPolicy;
 use AltDesign\AltCommerceStatamic\Models\StockMovement;
+use Statamic\Contracts\Entries\Entry;
 
 class Stock extends BaseFieldType
 {
@@ -26,7 +27,10 @@ class Stock extends BaseFieldType
 
     public function preload()
     {
-        $entry = $this->field?->parent();
+        // On the "create" screen the field's parent is the collection, not an
+        // entry, so there's no product to read stock for yet.
+        $parent = $this->field?->parent();
+        $entry = $parent instanceof Entry ? $parent : null;
         $productId = $entry?->id();
         $stock = app(StockRepository::class);
 
