@@ -1,0 +1,18 @@
+title: 'Pricing & Tax'
+fields:
+  -
+    handle: pricing
+    field:
+      type: multi_currency_pricing
+      display: Pricing
+  -
+    handle: tax_rate
+    field:
+      type: tax_rate_selector
+      display: 'Tax Rate'
+  -
+    handle: taxable
+    field:
+      type: toggle
+      display: Taxable
+      default: true
