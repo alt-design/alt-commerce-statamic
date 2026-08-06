@@ -99,7 +99,7 @@ export default {
                         @keydown.enter.prevent="apply"
                     />
                 </div>
-                <div class="w-52">
+                <div class="w-72">
                     <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Reason</label>
                     <Select :options="reasonOptions" v-model="reason" />
                 </div>
