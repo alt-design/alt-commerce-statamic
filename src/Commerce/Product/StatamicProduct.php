@@ -5,6 +5,7 @@ namespace AltDesign\AltCommerceStatamic\Commerce\Product;
 
 use AltDesign\AltCommerce\Contracts\PricingSchema;
 use AltDesign\AltCommerce\Contracts\Product;
+use AltDesign\AltCommerce\Enum\StockPolicy;
 
 class StatamicProduct implements Product
 {
@@ -15,9 +16,15 @@ class StatamicProduct implements Product
         protected bool              $taxable,
         protected array $taxRules,
         protected PricingSchema $price,
+        protected StockPolicy $stockPolicy = StockPolicy::UNTRACKED,
     )
     {
 
+    }
+
+    public function stockPolicy(): StockPolicy
+    {
+        return $this->stockPolicy;
     }
 
     public function name(): string

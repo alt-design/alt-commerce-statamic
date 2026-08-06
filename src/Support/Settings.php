@@ -2,11 +2,9 @@
 
 namespace AltDesign\AltCommerceStatamic\Support;
 
-
 use Statamic\Facades\YAML;
 use Statamic\Fields\BlueprintRepository;
 use Statamic\Filesystem\Manager;
-
 
 class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 {
@@ -15,8 +13,7 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
     public function __construct(
         protected Manager $fileSystemManager,
         protected BlueprintRepository $blueprintRepository,
-    )
-    {
+    ) {
         $this->load();
     }
 
@@ -55,12 +52,17 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
         return $this->settings['default_tax_rate'] ?? 0.2;
     }
 
+    public function lowStockThreshold(): int
+    {
+        return (int) ($this->settings['low_stock_threshold'] ?? 5);
+    }
+
     public function orderNumberStartSequence(): string
     {
         return $this->settings['order_number_start_sequence'] ?? '00001';
     }
 
-    public function orderNumberPrefix(): null|string
+    public function orderNumberPrefix(): ?string
     {
         return $this->settings['order_number_prefix'];
     }
@@ -78,7 +80,7 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 
     public function set(string $name, mixed $value): void
     {
-        if (!in_array($name, ['current_order_number'])) {
+        if (! in_array($name, ['current_order_number'])) {
             throw new \InvalidArgumentException("$name is not a valid setting");
         }
         $this->settings[$name] = $value;
@@ -92,10 +94,11 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 
     public function blueprint(): mixed
     {
-        $dir = __DIR__ . '/../../resources/blueprints';
+        $dir = __DIR__.'/../../resources/blueprints';
         if (file_exists(resource_path('blueprints/vendor/alt-commerce/settings.yaml'))) {
             $dir = resource_path('blueprints/vendor/alt-commerce');
         }
+
         return $this->blueprintRepository
             ->setDirectory($dir)
             ->find('settings');
@@ -105,13 +108,13 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
     {
         if (empty($this->settings)) {
             $filePath = $this->fileSystemManager->disk()->get($this->settingsFilePath());
-            $this->settings = Yaml::parse($filePath);
+            $this->settings = YAML::parse($filePath);
         }
     }
 
     protected function save()
     {
-        $this->fileSystemManager->disk()->put($this->settingsFilePath(), Yaml::dump($this->settings));
+        $this->fileSystemManager->disk()->put($this->settingsFilePath(), YAML::dump($this->settings));
     }
 
     protected function settingsFilePath(): string
