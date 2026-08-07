@@ -1,0 +1,30 @@
+title: Stock
+fields:
+  -
+    handle: stock_policy
+    field:
+      type: select
+      display: 'Stock Policy'
+      default: untracked
+      instructions: 'How availability is determined.'
+      options:
+        untracked: 'Untracked (always available)'
+        tracked: 'Tracked (block when it hits zero)'
+        backorder: 'Backorder (sell past zero, shows lead time)'
+  -
+    handle: stock_level
+    field:
+      type: stock
+      display: Stock
+      listable: true
+      instructions: 'Current counted level. Use Adjust to restock or correct.'
+      if:
+        stock_policy: 'not untracked'
+  -
+    handle: lead_time
+    field:
+      type: text
+      display: 'Lead Time'
+      instructions: 'Shown when a backorder product reaches zero, e.g. "7 days".'
+      if:
+        stock_policy: 'equals backorder'

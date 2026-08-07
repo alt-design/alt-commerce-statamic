@@ -1,6 +1,10 @@
 <script>
+import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
+import { Select } from '@statamic/cms/ui';
+
 export default {
     mixins: [Fieldtype],
+    components: { Select },
     data() {
         return {
             id: null,
@@ -19,5 +23,5 @@ export default {
 };
 </script>
 <template>
-    <select-input :options="this.meta" v-model="id"/>
+    <Select :options="meta" v-model="id" />
 </template>

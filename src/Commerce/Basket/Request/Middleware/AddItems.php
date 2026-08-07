@@ -29,14 +29,14 @@ class AddItems
         $lineItems = collect(request('items', []))
             ->filter(fn($item) => $item['type'] === 'line_item')
             ->filter(fn($item) => $item['quantity'] > 0)
-            ->filter(fn($item) => ($item['price'] ?? 0)  > 0)
+            ->filter(fn($item) => $this->parseAmount($item['price'] ?? 0) > 0)
             ->filter(fn($item) => !empty($item['product'][0]));
 
         foreach ($lineItems as $item) {
             $context->addToBasket(
                 productId: $item['product'][0],
                 quantity: $item['quantity'],
-                price: floatval($item['price']) * 100,
+                price: (int) round($this->parseAmount($item['price']) * 100),
                 options: $item['options'] ?? [],
             );
 
@@ -46,21 +46,40 @@ class AddItems
                 CalculateLineItemTax::$skip[] = $lineItem->id;
                 $lineItem->taxRate = $item['tax_rate_manual'] ?? 0;
                 $lineItem->taxName = $item['tax_name_manual'] ?? '';
-                $lineItem->taxTotal = (floatval($item['tax_amount_manual'] ?? 0)) * 100;
+                $lineItem->taxTotal = (int) round($this->parseAmount($item['tax_amount_manual'] ?? 0) * 100);
             }
         }
 
 
         $discountItems = collect(request('items', []))
             ->filter(fn($item) => $item['type'] === 'discount_item')
-            ->filter(fn($item) => floatval($item['discount_amount'] ?? 0)  > 0);
+            ->filter(fn($item) => $this->parseAmount($item['discount_amount'] ?? 0) > 0);
 
 
         foreach ($discountItems as $item) {
-            $context->applyManualDiscount(floatval($item['discount_amount']) * 100, $item['discount_name'] ?? 'Manual discount');
+            $context->applyManualDiscount((int) round($this->parseAmount($item['discount_amount']) * 100), $item['discount_name'] ?? 'Manual discount');
         }
 
 
         return $next($context);
+    }
+
+    /**
+     * Form values arrive preProcessed by the money fieldtype ("2,100.00");
+     * floatval() reads that as 2, silently corrupting prices over 999.
+     */
+    protected function parseAmount(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $parsed = (new \NumberFormatter('en_GB', \NumberFormatter::DECIMAL))->parse((string) $value);
+
+        return $parsed === false ? 0.0 : (float) $parsed;
     }
 }

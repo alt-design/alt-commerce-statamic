@@ -9,6 +9,7 @@ use AltDesign\AltCommerce\Contracts\PricingSchema;
 use AltDesign\AltCommerce\Contracts\Product;
 use AltDesign\AltCommerce\Commerce\Tax\TaxRule;
 use AltDesign\AltCommerce\Enum\DurationUnit;
+use AltDesign\AltCommerce\Enum\StockPolicy;
 use AltDesign\AltCommerce\Support\Duration;
 use AltDesign\AltCommerceStatamic\Concerns\HasGatewayEntities;
 use AltDesign\AltCommerceStatamic\Contracts\CurrencyConvertor;
@@ -40,6 +41,7 @@ class ProductFactory
             taxable: (bool)$entry->taxable,
             taxRules: $this->taxRules($entry),
             price: $this->pricingSchema($entry),
+            stockPolicy: StockPolicy::tryFrom((string) $entry->value('stock_policy')) ?? StockPolicy::UNTRACKED,
         );
     }
 

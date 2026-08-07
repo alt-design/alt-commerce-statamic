@@ -2,7 +2,6 @@
 
 namespace AltDesign\AltCommerceStatamic;
 
-
 use AltDesign\AltCommerce\Commerce\Basket\BasketBroker;
 use AltDesign\AltCommerce\Commerce\Basket\BasketManager;
 use AltDesign\AltCommerce\Commerce\Payment\GatewayBroker;
@@ -14,7 +13,9 @@ use AltDesign\AltCommerce\Contracts\OrderRepository;
 use AltDesign\AltCommerce\Contracts\ProductRepository;
 use AltDesign\AltCommerce\Contracts\Resolver;
 use AltDesign\AltCommerce\Contracts\Settings;
+use AltDesign\AltCommerce\Contracts\StockRepository;
 use AltDesign\AltCommerce\Contracts\VisitorLocator;
+use AltDesign\AltCommerce\Enum\StockPolicy;
 use AltDesign\AltCommerce\Services\PriceCalculatorService\Service as PriceCalculatorService;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\StatamicCouponRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Coupon\ValidateCustomerRedemptionLimit;
@@ -25,22 +26,29 @@ use AltDesign\AltCommerceStatamic\Commerce\Order\StatamicOrderRepository;
 use AltDesign\AltCommerceStatamic\Commerce\Product\ProductFactory;
 use AltDesign\AltCommerceStatamic\Commerce\Product\ProductQueryBuilder;
 use AltDesign\AltCommerceStatamic\Commerce\Product\StatamicProductRepository;
+use AltDesign\AltCommerceStatamic\Commerce\Stock\StatamicStockRepository;
+use AltDesign\AltCommerceStatamic\Console\AdjustStock;
 use AltDesign\AltCommerceStatamic\Contracts\CurrencyConvertor;
 use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
 use AltDesign\AltCommerceStatamic\CP\Actions\AddOrderNote;
+use AltDesign\AltCommerceStatamic\CP\Actions\AdjustStock as AdjustStockAction;
 use AltDesign\AltCommerceStatamic\CP\Actions\DeleteOrderNote;
 use AltDesign\AltCommerceStatamic\CP\Actions\UpdateOrderStatusToRefunded;
 use AltDesign\AltCommerceStatamic\Fieldtypes\MultiCurrencyPricing;
+use AltDesign\AltCommerceStatamic\Fieldtypes\Stock as StockFieldtype;
 use AltDesign\AltCommerceStatamic\Fieldtypes\TaxRateSelector;
 use AltDesign\AltCommerceStatamic\Tags\Order;
 use AltDesign\AltCommerceStatamic\Tags\Price;
+use AltDesign\AltCommerceStatamic\Tags\Stock;
 use AltDesign\AltCommerceStatamic\Transformers\BaseOrderTransformer;
+use AltDesign\AltCommerceStatamic\Widgets\LowStock;
 use Illuminate\Support\Facades\File;
+use Statamic\Facades\Collection;
 use Statamic\Facades\CP\Nav;
+use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Stache\Stache;
 use Statamic\Statamic;
-
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -53,11 +61,17 @@ class ServiceProvider extends AddonServiceProvider
     protected $tags = [
         Price::class,
         Order::class,
+        Stock::class,
     ];
 
     protected $fieldtypes = [
         MultiCurrencyPricing::class,
         TaxRateSelector::class,
+        StockFieldtype::class,
+    ];
+
+    protected $widgets = [
+        LowStock::class,
     ];
 
     protected $vite = [
@@ -81,6 +95,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->bind(CustomerRepository::class, StatamicCustomerRepository::class);
         $this->app->bind(CouponRepository::class, StatamicCouponRepository::class);
         $this->app->bind(ProductRepository::class, StatamicProductRepository::class);
+        $this->app->bind(StockRepository::class, StatamicStockRepository::class);
         $this->app->bind(OrderRepository::class, StatamicOrderRepository::class);
         $this->app->bind(OrderFactory::class, StatamicOrderFactory::class);
         $this->app->bind(OrderTransformer::class, BaseOrderTransformer::class);
@@ -88,42 +103,64 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->bind(VisitorLocator::class, Support\VisitorLocator::class);
 
         $this->app->singleton(BasketManager::class);
-        $this->app->singleton(PriceCalculatorService::class, fn($app) =>
-            new PriceCalculatorService(
-                $app->make(Settings::class)->defaultTaxRate()
-            )
+        $this->app->singleton(PriceCalculatorService::class, fn ($app) => new PriceCalculatorService(
+            $app->make(Settings::class)->defaultTaxRate()
+        )
         );
 
-        $this->app->bind(Resolver::class, fn() => new class() implements Resolver {
+        $this->app->bind(Resolver::class, fn () => new class implements Resolver
+        {
             public function resolve(string $abstract, array $with = []): mixed
             {
                 return app()->makeWith($abstract, $with);
             }
         });
 
-        $this->app->singleton(GatewayBroker::class, function() {
+        $this->app->singleton(GatewayBroker::class, function () {
             return new GatewayBroker(app(Resolver::class), config('alt-commerce.payment_gateways'));
         });
 
-        $this->app->singleton(BasketBroker::class, function() {
+        $this->app->singleton(BasketBroker::class, function () {
             return new BasketBroker(app(Resolver::class), config('alt-commerce.baskets'));
         });
 
-        $this->app->bind(ProductQueryBuilder::class, fn($app) =>
-            new ProductQueryBuilder(
-                store: $this->app->make(Stache::class)->store('entries'),
-                factory: $app->make(ProductFactory::class)
-            )
+        $this->app->bind(ProductQueryBuilder::class, fn ($app) => new ProductQueryBuilder(
+            store: $this->app->make(Stache::class)->store('entries'),
+            factory: $app->make(ProductFactory::class)
+        )
         );
 
         ValidateCouponPipeline::register(
-            new ValidateRedemptionLimit(),
-            new ValidateCustomerRedemptionLimit(),
+            new ValidateRedemptionLimit,
+            new ValidateCustomerRedemptionLimit,
         );
     }
 
     public function bootAddon(): void
     {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        $this->commands([
+            AdjustStock::class,
+        ]);
+
+        // Fills the "Stock" column on the products listing with the live level.
+        Collection::computed('products', 'stock_level', function ($entry) {
+            $policy = StockPolicy::tryFrom((string) $entry->value('stock_policy'));
+
+            if (! $policy || $policy === StockPolicy::UNTRACKED) {
+                return '—';
+            }
+
+            return app(StockRepository::class)->available($entry->id()) ?? 0;
+        });
+
+        // Statamic 6 drops nav items gated on unregistered permissions,
+        // even for super users, so the permission must be registered.
+        Permission::extend(function () {
+            Permission::register('view alt-commerce')->label('View Alt Commerce');
+        });
+
         Nav::extend(function ($nav) {
             $nav->content('Alt Commerce')
                 ->section('Settings')
@@ -142,6 +179,7 @@ class ServiceProvider extends AddonServiceProvider
         AddOrderNote::register();
         DeleteOrderNote::register();
         UpdateOrderStatusToRefunded::register();
+        AdjustStockAction::register();
 
         Statamic::afterInstalled(function () {
             foreach ($this->filesToPublish as $source => $target) {

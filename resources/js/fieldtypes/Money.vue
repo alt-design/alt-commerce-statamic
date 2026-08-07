@@ -1,24 +1,21 @@
 <script>
+import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
+import { Input } from '@statamic/cms/ui';
+
 export default {
     mixins: [Fieldtype],
+    components: { Input },
 };
 </script>
 
 <template>
-    <text-input
+    <Input
         type="text"
-        tabindex="0"
-        :name="name"
-        :focus="focus"
-        :value="value"
-        :is-read-only="isReadOnly"
         :id="fieldId"
-        @input="updateDebounced"
+        :model-value="value"
+        :read-only="isReadOnly"
+        @update:model-value="updateDebounced"
         @focus="$emit('focus')"
         @blur="$emit('blur')"
     />
 </template>
-
-<style scoped>
-
-</style>

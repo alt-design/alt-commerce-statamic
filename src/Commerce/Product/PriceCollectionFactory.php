@@ -11,8 +11,7 @@ class PriceCollectionFactory
 {
     public function __construct(
         protected CurrencyConvertor $currencyConvertor,
-    )
-    {}
+    ) {}
 
     public function create($prices): PriceCollection
     {
@@ -20,8 +19,7 @@ class PriceCollectionFactory
             $prices = $prices->value();
         }
 
-
-        if (!is_array($prices) || empty($prices)) {
+        if (! is_array($prices) || empty($prices)) {
             return new PriceCollection(prices: []);
         }
 
@@ -37,8 +35,8 @@ class PriceCollectionFactory
                 currency: $price['currency'],
             );
         }
+
         return new PriceCollection(prices: $ar);
 
     }
-
 }
