@@ -6,12 +6,12 @@
     "isEntry": true
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-D0GPfFdG.js",
+    "file": "assets/addon-CiOUJ5cs.js",
     "name": "addon",
     "src": "resources/js/addon.js",
     "isEntry": true,
     "css": [
-      "assets/addon-BzlxPMUN.css"
+      "assets/addon-CyLLuSqS.css"
     ]
   }
 }

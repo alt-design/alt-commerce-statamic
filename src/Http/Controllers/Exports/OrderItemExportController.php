@@ -104,10 +104,10 @@ class OrderItemExportController
         $handle = fopen('php://temp', 'w+');
         try {
 
-            fputcsv($handle, array_map(fn($column) => $column['title'], $this->columns));
+            fputcsv($handle, array_map(fn($column) => $column['title'], $this->columns), escape: '\\');
 
             foreach ($this->extractRows($orders) as $row) {
-                fputcsv($handle, array_map(fn($column) => $column['format']($row), $this->columns));
+                fputcsv($handle, array_map(fn($column) => $column['format']($row), $this->columns), escape: '\\');
             }
             rewind($handle);
 
@@ -115,7 +115,7 @@ class OrderItemExportController
 
             return Response::make($content, 200, [
                 'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="csv-export.csv"',
+                'Content-Disposition' => 'attachment; filename="order-items-'.now()->format('Y-m-d').'.csv"',
             ]);
 
         } finally {

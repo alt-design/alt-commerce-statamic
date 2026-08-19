@@ -337,18 +337,14 @@ export default {
 
             this.blueprint = blueprint
         },
-    },
 
-
-    beforeMount() {
-
-        Statamic.$callbacks.add('orderActionRan', (data) => {
+        applyOrderActions(data) {
             data.actions.forEach((action) => {
                 if (action.type === 'note-added') {
                     this.notes.unshift(JSON.parse(action.note))
                 }
 
-                if (action.type=== 'log-added') {
+                if (action.type === 'log-added') {
                     this.logs.unshift(JSON.parse(action.log))
                 }
 
@@ -360,10 +356,18 @@ export default {
                 }
 
                 if (action.type === 'status-updated') {
-                    this.status = action.status
+                    this.values.order_status = action.status
+                    this.valuesMutable = { ...this.valuesMutable, order_status: action.status }
                 }
             })
-        });
+        },
+
+    },
+
+
+    beforeMount() {
+
+        Statamic.$callbacks.add('orderActionRan', (data) => this.applyOrderActions(data));
 
         this.$axios.get(this.endpoint).then(({data}) => this.setup(data))
     },
@@ -397,7 +401,7 @@ export default {
                 >
                     <Dropdown>
                         <template #trigger>
-                            <Button icon="dots-horizontal" icon-only :aria-label="__('Actions')" />
+                            <Button icon="chevron-down" :aria-label="__('Actions')">{{ __('Actions') }}</Button>
                         </template>
                         <DropdownMenu>
                             <DropdownItem
