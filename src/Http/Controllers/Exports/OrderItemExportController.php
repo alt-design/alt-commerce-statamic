@@ -80,6 +80,10 @@ class OrderItemExportController
                 'format' => fn($row) => $row['order_number']
             ],
             [
+                'title' => 'Order status',
+                'format' => fn($row) => $row['order_status']
+            ],
+            [
                 'title' => 'VAT Number',
                 'format' => fn($row) => $row['vat_number']
             ]
@@ -104,10 +108,10 @@ class OrderItemExportController
         $handle = fopen('php://temp', 'w+');
         try {
 
-            fputcsv($handle, array_map(fn($column) => $column['title'], $this->columns));
+            fputcsv($handle, array_map(fn($column) => $column['title'], $this->columns), escape: '\\');
 
             foreach ($this->extractRows($orders) as $row) {
-                fputcsv($handle, array_map(fn($column) => $column['format']($row), $this->columns));
+                fputcsv($handle, array_map(fn($column) => $column['format']($row), $this->columns), escape: '\\');
             }
             rewind($handle);
 
@@ -115,7 +119,7 @@ class OrderItemExportController
 
             return Response::make($content, 200, [
                 'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="csv-export.csv"',
+                'Content-Disposition' => 'attachment; filename="order-items-'.now()->format('Y-m-d').'.csv"',
             ]);
 
         } finally {
@@ -148,6 +152,7 @@ class OrderItemExportController
                         'discount_total' => $lineItem->discountTotal / $lineItem->quantity,
                         'discount_code' => $order->discountItems[0]->couponCode ?? null,
                         'order_number' => $order->orderNumber,
+                        'order_status' => $order->status->value,
                         'vat_number' => $order->additional['vat_number'] ?? null,
                         'tax_name' => $lineItem->taxName,
                         'tax_rate' => $lineItem->taxRate,
@@ -168,7 +173,12 @@ class OrderItemExportController
         return Entry::query()->where('collection', 'orders')
             ->when(request('date_from'), fn($query) => $query->where('created_at', '>=', Carbon::parse(request('date_from'))->startOfDay()))
             ->when(request('date_to'), fn($query) => $query->where('created_at', '<=', Carbon::parse(request('date_to'))->endOfDay()))
-            ->where('order_status', '=', OrderStatus::COMPLETE->value)
+            ->whereIn('order_status', [
+                OrderStatus::PENDING->value,
+                OrderStatus::PROCESSING->value,
+                OrderStatus::PROCESSED->value,
+                OrderStatus::COMPLETE->value,
+            ])
             ->get()
             ->map(fn($entry) => $this->orderFactory->fromEntry($entry))
             ->toArray();

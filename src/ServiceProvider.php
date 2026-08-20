@@ -33,8 +33,10 @@ use AltDesign\AltCommerceStatamic\Contracts\OrderTransformer;
 use AltDesign\AltCommerceStatamic\CP\Actions\AddOrderNote;
 use AltDesign\AltCommerceStatamic\CP\Actions\AdjustStock as AdjustStockAction;
 use AltDesign\AltCommerceStatamic\CP\Actions\DeleteOrderNote;
+use AltDesign\AltCommerceStatamic\CP\Actions\UpdateOrderStatus;
 use AltDesign\AltCommerceStatamic\CP\Actions\UpdateOrderStatusToRefunded;
 use AltDesign\AltCommerceStatamic\Fieldtypes\MultiCurrencyPricing;
+use AltDesign\AltCommerceStatamic\Fieldtypes\OrderStatus as OrderStatusFieldtype;
 use AltDesign\AltCommerceStatamic\Fieldtypes\Stock as StockFieldtype;
 use AltDesign\AltCommerceStatamic\Fieldtypes\TaxRateSelector;
 use AltDesign\AltCommerceStatamic\Tags\Order;
@@ -68,6 +70,7 @@ class ServiceProvider extends AddonServiceProvider
         MultiCurrencyPricing::class,
         TaxRateSelector::class,
         StockFieldtype::class,
+        OrderStatusFieldtype::class,
     ];
 
     protected $widgets = [
@@ -179,6 +182,7 @@ class ServiceProvider extends AddonServiceProvider
         AddOrderNote::register();
         DeleteOrderNote::register();
         UpdateOrderStatusToRefunded::register();
+        UpdateOrderStatus::register();
         AdjustStockAction::register();
 
         Statamic::afterInstalled(function () {

@@ -40,5 +40,5 @@ Route::group(['middleware' => ['statamic.cp.authenticated']], function () {
 
     Route::get('/alt-commerce/reports', ReportController::class)->name('alt-commerce::reports.index');
 
-    Route::post('/alt-commerce/exports/order-item', OrderItemExportController::class)->name('alt-commerce::exports.order-item');
+    Route::get('/alt-commerce/exports/order-item', OrderItemExportController::class)->name('alt-commerce::exports.order-item');
 });
