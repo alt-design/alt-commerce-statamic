@@ -9,12 +9,20 @@ const STATUS_COLORS = {
     refunded: { background: '#f3e8ff', color: '#7e22ce' },
 };
 
+const STATUS_LABELS = {
+    pending: 'Pending payment',
+};
+
 export default {
     props: ['value'],
 
     computed: {
         label() {
-            return this.value ? this.value.charAt(0).toUpperCase() + this.value.slice(1) : null;
+            if (!this.value) {
+                return null;
+            }
+
+            return STATUS_LABELS[this.value] ?? this.value.charAt(0).toUpperCase() + this.value.slice(1);
         },
         colors() {
             return STATUS_COLORS[this.value] ?? STATUS_COLORS.draft;
