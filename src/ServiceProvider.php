@@ -45,6 +45,7 @@ use AltDesign\AltCommerceStatamic\Tags\Stock;
 use AltDesign\AltCommerceStatamic\Transformers\BaseOrderTransformer;
 use AltDesign\AltCommerceStatamic\Widgets\LowStock;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Statamic\Facades\Collection;
 use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Permission;
@@ -156,6 +157,23 @@ class ServiceProvider extends AddonServiceProvider
             }
 
             return app(StockRepository::class)->available($entry->id()) ?? 0;
+        });
+
+        // Lead time is a number + unit group; this computed value renders the
+        // display phrase (e.g. "7 days", "1 week"). It must NOT reuse the
+        // `lead_time` handle — the Group fieldtype would try to augment the
+        // computed string and fatal.
+        Collection::computed('products', 'lead_time_label', function ($entry) {
+            $lead = $entry->get('lead_time');
+            $amount = (int) ($lead['value'] ?? 0);
+
+            if ($amount < 1) {
+                return null;
+            }
+
+            $unit = (string) ($lead['unit'] ?? 'days');
+
+            return $amount.' '.($amount === 1 ? Str::singular($unit) : $unit);
         });
 
         // Statamic 6 drops nav items gated on unregistered permissions,

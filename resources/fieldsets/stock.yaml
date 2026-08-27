@@ -23,8 +23,30 @@ fields:
   -
     handle: lead_time
     field:
-      type: text
+      type: group
       display: 'Lead Time'
-      instructions: 'Shown when a backorder product reaches zero, e.g. "7 days".'
+      instructions: 'Shown when a backorder product reaches zero, e.g. 7 with "Days".'
       if:
         stock_policy: 'equals backorder'
+      fields:
+        -
+          handle: value
+          field:
+            type: integer
+            display: 'Lead Time'
+            min: 1
+            width: 50
+        -
+          handle: unit
+          field:
+            type: select
+            display: 'Lead Time Unit'
+            default: days
+            options:
+              - key: days
+                value: Days
+              - key: weeks
+                value: Weeks
+              - key: months
+                value: Months
+            width: 50
