@@ -9,6 +9,10 @@ use AltDesign\AltCommerce\Contracts\ProductCoupon;
 class StatamicProductCoupon implements ProductCoupon
 {
 
+    /**
+     * @param array<string> $eligibleProducts
+     * @param array<string> $excludedProducts
+     */
     public function __construct(
         protected string $id,
         protected string $name,
@@ -21,6 +25,8 @@ class StatamicProductCoupon implements ProductCoupon
         protected array $eligibleProducts,
         public int $redemptionLimit,
         public int $customerRedemptionLimit,
+        protected array $excludedProducts = [],
+        protected int $minimumSpend = 0,
     )
     {
 
@@ -61,8 +67,17 @@ class StatamicProductCoupon implements ProductCoupon
         return $this->isPercentage;
     }
 
-    public function isProductEligible(string $productId): string
+    public function minimumSpend(): int
     {
-        return in_array($productId, $this->eligibleProducts);
+        return $this->minimumSpend;
+    }
+
+    public function isProductEligible(string $productId): bool
+    {
+        if (in_array($productId, $this->excludedProducts)) {
+            return false;
+        }
+
+        return empty($this->eligibleProducts) || in_array($productId, $this->eligibleProducts);
     }
 }

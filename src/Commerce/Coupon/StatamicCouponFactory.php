@@ -24,12 +24,32 @@ class StatamicCouponFactory
             startDate: $startDate,
             endDate: $endDate,
             discountAmount: $discountAmount,
-            isPercentage: true,
+            isPercentage: $entry->get('type') === 'percentage',
             eligibleProducts: $entry->get('included_products') ?? [],
             redemptionLimit: $entry->get('redemption_limit') ?? 0,
             customerRedemptionLimit: $entry->get('customer_redemption_limit') ?? 0,
+            excludedProducts: $entry->get('excluded_products') ?? [],
+            minimumSpend: $this->findMinimumSpend($entry, $currency),
         );
 
+    }
+
+    protected function findMinimumSpend(Entry $entry, string $currency): int
+    {
+        $prices = $entry->get('minimum_spend');
+
+        if (!is_array($prices)) {
+            // Ignore legacy float values from before this was a multi currency field.
+            return 0;
+        }
+
+        foreach ($prices as $price) {
+            if ($price['currency'] === $currency) {
+                return (int) round($price['amount'] * 100);
+            }
+        }
+
+        return 0;
     }
 
     protected function findDiscountAmount(Entry $entry, string $currency): int
