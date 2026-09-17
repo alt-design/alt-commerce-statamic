@@ -17,6 +17,7 @@ class StatamicProduct implements Product
         protected array $taxRules,
         protected PricingSchema $price,
         protected StockPolicy $stockPolicy = StockPolicy::UNTRACKED,
+        protected bool $purchasable = true,
     )
     {
 
@@ -25,6 +26,11 @@ class StatamicProduct implements Product
     public function stockPolicy(): StockPolicy
     {
         return $this->stockPolicy;
+    }
+
+    public function purchasable(): bool
+    {
+        return $this->purchasable;
     }
 
     public function name(): string
