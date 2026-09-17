@@ -42,6 +42,7 @@ class ProductFactory
             taxRules: $this->taxRules($entry),
             price: $this->pricingSchema($entry),
             stockPolicy: StockPolicy::tryFrom((string) $entry->value('stock_policy')) ?? StockPolicy::UNTRACKED,
+            purchasable: $entry->published(),
         );
     }
 
