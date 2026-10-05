@@ -23,13 +23,27 @@ export default {
         policyLabel() {
             return this.meta.policy.charAt(0).toUpperCase() + this.meta.policy.slice(1);
         },
-        canApply() {
+        hasPendingAdjustment() {
             const n = Number(this.quantity);
-            return !!this.meta.adjust_url && Number.isInteger(n) && n !== 0 && !this.saving;
+            return Number.isInteger(n) && n !== 0;
+        },
+        canApply() {
+            return !!this.meta.adjust_url && this.hasPendingAdjustment && !this.saving;
+        },
+        dirtyKey() {
+            return `stock-adjustment-${this.meta.product_id}`;
         },
         reasonOptions() {
             return [{ value: null, label: 'No reason' }, ...(this.meta.reasons || [])];
         },
+    },
+    watch: {
+        hasPendingAdjustment(pending) {
+            this.$dirty.state(this.dirtyKey, pending);
+        },
+    },
+    unmounted() {
+        this.$dirty.remove(this.dirtyKey);
     },
     methods: {
         async apply() {
