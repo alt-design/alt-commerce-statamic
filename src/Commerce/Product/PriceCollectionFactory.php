@@ -25,13 +25,13 @@ class PriceCollectionFactory
 
         $ar = [];
         foreach ($prices as $price) {
-            $amount = $price['amount'] * 100;
+            $amount = (int) round((float) $price['amount'] * 100);
             if ($amount === 0) {
                 continue;
             }
 
             $ar[] = new Money(
-                amount: $price['amount'] * 100,
+                amount: $amount,
                 currency: $price['currency'],
             );
         }

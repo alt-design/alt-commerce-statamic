@@ -60,7 +60,7 @@ class StatamicCouponFactory
 
         foreach ($entry->get('pricing') as $price) {
             if ($price['currency'] === $currency) {
-                return $price['amount'] * 100;
+                return (int) round((float) $price['amount'] * 100);
             }
         }
 
