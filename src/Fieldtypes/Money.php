@@ -36,7 +36,7 @@ class Money extends BaseFieldType
         // todo pull locale from statamic settings
         $fmt = new \NumberFormatter('en_GB', \NumberFormatter::DECIMAL);
         $data = $fmt->parse($data);
-        return (int) ($data * 100);
+        return (int) round($data * 100);
     }
 
     public function filter()

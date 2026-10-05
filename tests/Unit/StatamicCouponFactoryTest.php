@@ -57,6 +57,20 @@ class StatamicCouponFactoryTest extends TestCase
         $this->assertSame(500, $coupon->discountAmount());
     }
 
+    public function test_fixed_coupon_rounds_to_the_nearest_penny(): void
+    {
+        $coupon = (new StatamicCouponFactory())->fromEntry($this->createEntry([
+            'title' => '£37.62 off',
+            'code' => 'ODD',
+            'type' => 'fixed',
+            'pricing' => [
+                ['currency' => 'GBP', 'amount' => '37.62'],
+            ],
+        ]), 'GBP');
+
+        $this->assertSame(3762, $coupon->discountAmount());
+    }
+
     public function test_minimum_spend_uses_amount_for_currency(): void
     {
         $coupon = (new StatamicCouponFactory())->fromEntry($this->createEntry([
