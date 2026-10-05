@@ -38,7 +38,7 @@ tabs:
           -
             handle: percentage
             field:
-              type: float
+              type: integer
               display: Percentage
               validate:
                 - sometimes

@@ -205,7 +205,7 @@ class ServiceProvider extends AddonServiceProvider
 
         Statamic::afterInstalled(function () {
             foreach ($this->filesToPublish as $source => $target) {
-                if (File::exists($source)) {
+                if (File::exists($source) && ! File::exists($target)) {
                     File::ensureDirectoryExists(dirname($target));
                     File::copy($source, $target);
                 }
