@@ -66,10 +66,6 @@ export default {
                 this.noteToDelete = null
             }
         },
-
-        formattedContent(content) {
-            return content.split("\n").map(line => `<p>${line}</p>`).join("");
-        }
     }
 }
 
@@ -105,7 +101,9 @@ export default {
                 <button class="text-red-500" @click="confirmDelete(note)">Delete</button>
             </div>
 
-            <div class="text-sm ml-3 mt-3" v-html="formattedContent(note.content)"/>
+            <div class="text-sm ml-3 mt-3">
+                <p v-for="(line, index) in note.content.split('\n')" :key="index">{{ line }}</p>
+            </div>
 
         </div>
     </div>
