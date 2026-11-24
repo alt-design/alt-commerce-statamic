@@ -1,12 +1,16 @@
 <script>
-import { ConfirmationModal } from '@statamic/cms/ui';
+import { Badge, ConfirmationModal } from '@statamic/cms/ui';
 
 export default {
 
-    components: { ConfirmationModal },
+    components: { Badge, ConfirmationModal },
     emits: ['deleteNote', 'addNote'],
     props: {
         notes: {
+            type: Array,
+            default: () => [],
+        },
+        logs: {
             type: Array,
             default: () => [],
         }
@@ -20,7 +24,16 @@ export default {
             addingNote: false,
         }
     },
+    computed: {
+        entries() {
+            return [...this.notes, ...this.logs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        },
+    },
     methods: {
+        isNote(entry) {
+            return this.notes.includes(entry)
+        },
+
         async submitNote() {
             const content = this.newNote.trim()
             if (!content || this.addingNote) {
@@ -75,10 +88,11 @@ export default {
 <template>
 
 <div class="card order-notes">
-    <h2>Notes</h2>
+    <h2>Notes and logs</h2>
 
     <div class="add-note">
         <textarea
+            aria-label="Note"
             v-model="newNote"
             rows="2"
             placeholder="Add a note about this order..."
@@ -91,25 +105,32 @@ export default {
         </button>
     </div>
 
-    <div class="note-list" v-if="notes.length">
-        <div v-for="note in notes" :key="note.id" class="py-6">
+    <ul class="note-list" v-if="entries.length">
+        <li v-for="entry in entries" :key="entry.id" class="py-6">
 
-            <div class="author text-gray-600">
-                <div class="font-medium">{{ note.userName }}</div>
-                <div class="text-xs">{{ new Date(note.createdAt).toLocaleString() }}</div>
+            <div class="author text-gray-600 dark:text-gray-400">
+                <Badge size="sm" :text="isNote(entry) ? 'Note' : 'Log'" />
+                <div v-if="isNote(entry)" class="font-medium">{{ entry.userName }}</div>
+                <time class="text-xs" :datetime="entry.createdAt">{{ new Date(entry.createdAt).toLocaleString() }}</time>
 
-                <button class="text-red-500" @click="confirmDelete(note)">Delete</button>
+                <button
+                    v-if="isNote(entry)"
+                    type="button"
+                    class="text-red-600 dark:text-red-400"
+                    :aria-label="`Delete note by ${entry.userName}, ${new Date(entry.createdAt).toLocaleString()}`"
+                    @click="confirmDelete(entry)"
+                >Delete</button>
             </div>
 
-            <div class="text-sm ml-3 mt-3">
-                <p v-for="(line, index) in note.content.split('\n')" :key="index">{{ line }}</p>
+            <div class="text-sm mt-3">
+                <p v-for="(line, index) in entry.content.split('\n')" :key="index">{{ line }}</p>
             </div>
 
-        </div>
-    </div>
+        </li>
+    </ul>
 
     <ConfirmationModal
-        v-if="showConfirmationModal"
+        :open="showConfirmationModal"
         title="Delete Note"
         :danger="true"
         :busy="deletingNote"

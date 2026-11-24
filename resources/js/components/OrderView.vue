@@ -2,7 +2,6 @@
 import { HasActionsMixin, ItemActions } from '@statamic/cms';
 import { PublishContainer, PublishTabs, Button, Dropdown, DropdownMenu, DropdownItem } from '@statamic/cms/ui';
 import OrderNotes from "./OrderNotes.vue";
-import OrderLogs from "./OrderLogs.vue";
 import OrderTransactions from "./OrderTransactions.vue";
 
 export default {
@@ -16,7 +15,6 @@ export default {
         DropdownItem,
         ItemActions,
         OrderTransactions,
-        OrderLogs,
         OrderNotes,
     },
     props: [
@@ -425,9 +423,7 @@ export default {
 
             <OrderTransactions v-if="!isCreating" v-bind="{transactions, gatewayUrls}" :currency="values.currency"/>
 
-            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" @deleteNote="deleteNote" @addNote="addNote" />
-
-            <OrderLogs class="mt-5"  v-if="!isCreating" :logs="logs"/>
+            <OrderNotes class="mt-5" v-if="!isCreating" :notes="notes" :logs="logs" @deleteNote="deleteNote" @addNote="addNote" />
 
 
         </div>
