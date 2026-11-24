@@ -38,6 +38,11 @@ abstract class OrderAction extends Action
         ];
     }
 
+    public function authorize($user, $item)
+    {
+        return $user->can('view alt-commerce');
+    }
+
     public function visibleTo($item)
     {
         if (empty($this->items) || ! $item instanceof Entry) {

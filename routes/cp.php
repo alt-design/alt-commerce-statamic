@@ -12,7 +12,7 @@ use AltDesign\AltCommerceStatamic\Http\Controllers\SettingsController;
 use AltDesign\AltCommerceStatamic\Http\Controllers\StockController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['middleware' => ['statamic.cp.authenticated']], function () {
+Route::group(['middleware' => ['statamic.cp.authenticated', 'can:view alt-commerce']], function () {
 
     Route::get('alt-commerce/orders', [OrderController::class, 'index'])->name('alt-commerce::order.index');
     Route::get('alt-commerce/order/{orderId?}', [OrderController::class, 'show'])->name('alt-commerce::order.show');

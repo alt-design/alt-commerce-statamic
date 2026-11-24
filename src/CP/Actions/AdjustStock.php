@@ -38,6 +38,11 @@ class AdjustStock extends Action
         return 'Adjust stock';
     }
 
+    public function authorize($user, $item)
+    {
+        return $user->can('view alt-commerce');
+    }
+
     public function visibleTo($item)
     {
         return $item instanceof Entry && $item->collection()?->handle() === 'products';

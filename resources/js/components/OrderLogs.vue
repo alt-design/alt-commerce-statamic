@@ -17,7 +17,7 @@ export default {
     <ul class="list">
         <li v-for="log in logs" :key="log.id" class="py-3">
             <div class="text-xs text-gray-600">{{ new Date(log.createdAt).toLocaleString() }}</div>
-            <div class="text-sm" v-html="log.content" />
+            <div class="text-sm">{{ log.content }}</div>
 
         </li>
     </ul>
