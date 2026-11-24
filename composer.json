@@ -1,18 +1,19 @@
 {
     "name": "alt-design/alt-commerce-statamic",
+    "description": "Alt Commerce Statamic addon",
     "authors": [
         {
             "name": "Alt Design"
         }
     ],
     "support": {
-        "email": "support@alt-desgin.net"
+        "email": "support@alt-design.net"
     },
     "require": {
         "league/iso3166": "^4.3",
         "ext-intl": "*",
         "statamic/cms": "^6.0",
-        "alt-design/alt-commerce": "dev-main"
+        "alt-design/alt-commerce": "^0.2"
     },
     "require-dev": {
         "orchestra/testbench": "^10.0 || ^11.0"

@@ -47,7 +47,7 @@ class OrderProcessor
             stage: $stageName,
             profile: $profile,
             nextStage: $this->determineNextStage($config, $stageName),
-            connection: $connection ?? $stage['connection'] ?? 'default',
+            connection: $connection ?? $stage['connection'] ?? null,
             queue: $stage['queue'] ?? 'default',
             mode: $mode ?? $config['mode'] ?? 'manual',
         );
@@ -60,7 +60,7 @@ class OrderProcessor
         string $stage,
         string $profile,
         string|null $nextStage,
-        string $connection,
+        ?string $connection,
         string $queue,
         string $mode,
     ): void
@@ -78,7 +78,7 @@ class OrderProcessor
             return;
         }
 
-        $this->info($order, "Dispatching jobs to queue '$queue' using connection '$connection'");
+        $this->info($order, "Dispatching jobs to queue '$queue' using connection '" . ($connection ?? config('queue.default')) . "'");
 
         $args = [
             'orderId' => $order->id,
