@@ -75,7 +75,6 @@ return [
                     ]
                 ],
                 'process' => [
-                    'connection' => 'default',
                     'queue' => 'process-order',
                     'condition' => OrderIsProcessing::class,
                     'tasks' => [
@@ -83,7 +82,6 @@ return [
                     ]
                 ],
                 'complete' => [
-                    'connection' => 'default',
                     'queue' => 'complete-order',
                     'condition' => OrderIsProcessed::class,
                     'tasks' => [
