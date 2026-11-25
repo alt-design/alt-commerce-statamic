@@ -22,9 +22,13 @@ All notable changes to this project are documented in this file. The format foll
 - Saving an order in the control panel no longer clears the billing name and postcode.
 - Order numbers can be made before the settings are saved.
 - A product with no price no longer causes an error when it is saved.
+- The Default Country setting is used for new baskets. It was saved but not read, so baskets started in GB.
+- The first order takes the start sequence. It was one higher.
+- An order number already in use is skipped, so an earlier order is not saved over when the counter is lost.
 
 ### Upgrading
 
+- Check Default Country in the settings. If it is not the United Kingdom, new baskets now start in the country you chose, which can change the tax on them.
 - If you use Braintree and have not published `config/alt-commerce.php`, publish it and add your Braintree settings before you update.
 - If `ALT_COMMERCE_ENABLED_PAYMENT_GATEWAYS` is not set, `stripe` is now enabled, and `STRIPE_KEY` and `STRIPE_SECRET` are needed to take a payment.
 

@@ -102,7 +102,7 @@ class FreshInstallTest extends AddonTestCase
 
     public function test_an_order_number_can_be_reserved_before_the_settings_are_saved(): void
     {
-        $this->assertMatchesRegularExpression('/^\d{5}$/', app(SequenceOrderNumberGenerator::class)->reserve());
+        $this->assertSame('00001', app(SequenceOrderNumberGenerator::class)->reserve());
     }
 
     public function test_a_product_without_a_price_can_be_made(): void
