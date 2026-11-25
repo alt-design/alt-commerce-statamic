@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows [Semantic Versioning](https://semver.org/). Before 1.0, a minor version can include breaking changes.
 
+## [Unreleased]
+
+### Changed
+
+- A shorter README, with the full guide in DOCUMENTATION.md. The guide now covers settings, tax, coupons and all the customer data that is stored.
+
+### Fixed
+
+- The documentation said amounts are in the smallest unit of the currency. They are in hundredths.
+
 ## [0.3.0] - 2026-11-25
 
 ### Added
@@ -25,6 +35,7 @@ All notable changes to this project are documented in this file. The format foll
 - The Default Country setting is used for new baskets. It was saved but not read, so baskets started in GB.
 - The first order takes the start sequence. It was one higher.
 - An order number already in use is skipped, so an earlier order is not saved over when the counter is lost.
+- The link to a live Braintree payment uses https.
 
 ### Upgrading
 
