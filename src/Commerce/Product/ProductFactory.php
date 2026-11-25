@@ -52,7 +52,7 @@ class ProductFactory
 
             $deposit = collect($entry->get('deposit'))->mapWithKeys(fn ($value) => [$value['currency'] => $value['amount']])->toArray();
             $pricing = [];
-            foreach ($entry->get('pricing') as $item) {
+            foreach ($entry->get('pricing') ?? [] as $item) {
                 $depositAmount = $deposit[$item['currency']] ?? null;
                 $pricing[] = [
                     'amount' => $depositAmount ?? $item['amount'],

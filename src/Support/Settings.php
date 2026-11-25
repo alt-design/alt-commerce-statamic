@@ -64,7 +64,7 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 
     public function orderNumberPrefix(): ?string
     {
-        return $this->settings['order_number_prefix'];
+        return $this->settings['order_number_prefix'] ?? null;
     }
 
     public function taxRules(): array

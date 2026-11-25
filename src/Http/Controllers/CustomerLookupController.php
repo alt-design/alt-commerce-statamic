@@ -15,6 +15,10 @@ class CustomerLookupController
 
         $customer = $customerRepository->find(request('id')) ?? throw new \Exception('Customer not found');
 
-        return $customer->toArray();
+        return [
+            'id' => $customer->customerId(),
+            'name' => $customer->customerName(),
+            'email' => $customer->customerEmail(),
+        ];
     }
 }
