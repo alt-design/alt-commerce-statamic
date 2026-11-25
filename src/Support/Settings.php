@@ -2,6 +2,7 @@
 
 namespace AltDesign\AltCommerceStatamic\Support;
 
+use League\ISO3166\ISO3166;
 use Statamic\Facades\YAML;
 use Statamic\Fields\BlueprintRepository;
 use Statamic\Filesystem\Manager;
@@ -29,7 +30,13 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 
     public function defaultCountryCode(): string
     {
-        return $this->settings['default_country_code'] ?? 'gb';
+        $country = $this->settings['default_country_code'] ?? $this->settings['default_country'] ?? 'gb';
+
+        if (strlen($country) === 2) {
+            return $country;
+        }
+
+        return (new ISO3166)->alpha3($country)['alpha2'];
     }
 
     public function defaultCurrency(): string
@@ -64,7 +71,7 @@ class Settings implements \AltDesign\AltCommerce\Contracts\Settings
 
     public function orderNumberPrefix(): ?string
     {
-        return $this->settings['order_number_prefix'];
+        return $this->settings['order_number_prefix'] ?? null;
     }
 
     public function taxRules(): array

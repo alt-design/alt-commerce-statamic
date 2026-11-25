@@ -52,7 +52,7 @@ class GatewayUrlGenerator
         $mode = config('alt-commerce.payment_gateways.available.braintree.mode');
         $merchantId = config('alt-commerce.payment_gateways.available.braintree.merchant_id');
 
-        $url = strtolower($mode) === 'sandbox' ?  'https://sandbox.braintreegateway.com' : 'http://braintreegateway.com';
+        $url = strtolower($mode) === 'sandbox' ?  'https://sandbox.braintreegateway.com' : 'https://braintreegateway.com';
         $url .= "/merchants/$merchantId/";
         $url .= match($type) {
             'transaction' =>"transactions/{$id}",

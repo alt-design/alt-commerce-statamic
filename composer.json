@@ -1,18 +1,32 @@
 {
     "name": "alt-design/alt-commerce-statamic",
-    "description": "Alt Commerce Statamic addon",
+    "description": "Sell products from a Statamic site: baskets, coupons, tax, stock, orders and Stripe payments.",
+    "type": "statamic-addon",
+    "license": "MIT",
+    "keywords": [
+        "statamic",
+        "statamic-addon",
+        "ecommerce",
+        "cart",
+        "orders",
+        "stock",
+        "stripe",
+        "alt-design"
+    ],
     "authors": [
         {
-            "name": "Alt Design"
+            "name": "Alt Design",
+            "homepage": "https://alt-design.net"
         }
     ],
     "support": {
-        "email": "support@alt-design.net"
+        "email": "support@alt-design.net",
+        "issues": "https://github.com/alt-design/alt-commerce-statamic/issues"
     },
     "require": {
         "league/iso3166": "^4.3",
         "ext-intl": "*",
-        "statamic/cms": "^6.0",
+        "statamic/cms": "^6.35",
         "alt-design/alt-commerce": "^0.2"
     },
     "require-dev": {
@@ -26,7 +40,7 @@
     "extra": {
         "statamic": {
             "name": "Alt Commerce",
-            "description": "Alt Commerce Statamic addon",
+            "description": "Sell products from a Statamic site: baskets, coupons, tax, stock, orders and Stripe payments.",
             "slug": "alt-commerce"
         },
         "laravel": {

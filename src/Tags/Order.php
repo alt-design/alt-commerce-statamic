@@ -4,6 +4,8 @@ namespace AltDesign\AltCommerceStatamic\Tags;
 
 
 use AltDesign\AltCommerce\Contracts\Customer;
+use AltDesign\AltCommerceStatamic\Commerce\Customer\StatamicCustomer;
+use Statamic\Contracts\Auth\User;
 use Statamic\Facades\Entry;
 use Statamic\Tags\Tags;
 
@@ -11,7 +13,8 @@ class Order extends Tags
 {
     public function all(): array
     {
-        $customer = auth()->user();
+        $user = auth()->user();
+        $customer = $user instanceof User ? new StatamicCustomer($user) : $user;
 
         if (! $customer instanceof Customer) {
             return [];

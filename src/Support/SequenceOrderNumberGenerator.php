@@ -3,6 +3,7 @@
 namespace AltDesign\AltCommerceStatamic\Support;
 
 use Illuminate\Support\Facades\Storage;
+use Statamic\Facades\Entry;
 
 class SequenceOrderNumberGenerator
 {
@@ -15,14 +16,35 @@ class SequenceOrderNumberGenerator
     {
         $next = $this->nextOrderNumber();
 
+        while ($this->isInUse($this->format($next))) {
+            $next++;
+        }
+
         $this->save($next);
 
-        $formatted = $this->addPadding($next);
+        return $this->format($next);
+    }
+
+    protected function format(int $number): string
+    {
+        $formatted = $this->addPadding($number);
 
         if ($prefix = $this->settings->orderNumberPrefix()) {
             $formatted = $prefix.'-'.$formatted;
         }
+
         return $formatted;
+    }
+
+    /**
+     * An order is saved over any other order with the same number.
+     */
+    protected function isInUse(string $orderNumber): bool
+    {
+        return Entry::query()
+            ->where('collection', 'orders')
+            ->where('order_number', $orderNumber)
+            ->exists();
     }
 
     protected function save(int $number): void
@@ -34,13 +56,8 @@ class SequenceOrderNumberGenerator
     protected function nextOrderNumber(): int
     {
         $start =  intval($this->settings->orderNumberStartSequence());
-        $current = $this->currentOrderNumber();
 
-        if ($start > $current) {
-            $current = $start;
-        }
-
-        return $current + 1;
+        return max($start, $this->currentOrderNumber() + 1);
     }
 
     protected function currentOrderNumber(): int

@@ -1,0 +1,42 @@
+title: Product
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              validate:
+                - required
+          -
+            handle: description
+            field:
+              type: textarea
+              display: Description
+          - import: 'alt-commerce::pricing'
+  stock:
+    display: Stock
+    sections:
+      -
+        fields:
+          - import: 'alt-commerce::stock'
+  sidebar:
+    display: Sidebar
+    sections:
+      -
+        fields:
+          -
+            handle: slug
+            field:
+              type: slug
+              localizable: true
+              validate: 'max:200'
+          -
+            handle: sku
+            field:
+              type: text
+              display: SKU

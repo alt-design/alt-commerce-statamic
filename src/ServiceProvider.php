@@ -86,11 +86,16 @@ class ServiceProvider extends AddonServiceProvider
         'publicDirectory' => 'resources/dist',
     ];
 
-    protected array $filesToPublish = [
-        __DIR__.'/../resources/blueprints/coupon_code.yaml' => 'resources/blueprints/collections/coupon_codes/coupon_code.yaml',
-        __DIR__.'/../resources/blueprints/coupon_redemption.yaml' => 'resources/blueprints/collections/coupon_redemptions/coupon_redemption.yaml',
-        __DIR__.'/../resources/collections/coupon_codes.yaml' => 'content/collections/coupon_codes.yaml',
-        __DIR__.'/../resources/collections/coupon_redemptions.yaml' => 'content/collections/coupon_redemptions.yaml',
+    /**
+     * Each collection handle, and the handle of the blueprint that comes with it.
+     *
+     * @var array<string, string>
+     */
+    protected array $collectionsToPublish = [
+        'coupon_codes' => 'coupon_code',
+        'coupon_redemptions' => 'coupon_redemption',
+        'orders' => 'order',
+        'products' => 'product',
     ];
 
     public function register(): void
@@ -179,7 +184,7 @@ class ServiceProvider extends AddonServiceProvider
         // Statamic 6 drops nav items gated on unregistered permissions,
         // even for super users, so the permission must be registered.
         Permission::extend(function () {
-            Permission::register('view alt-commerce')->label('View Alt Commerce');
+            Permission::register('view alt-commerce')->label('Manage Alt Commerce');
         });
 
         Nav::extend(function ($nav) {
@@ -203,13 +208,29 @@ class ServiceProvider extends AddonServiceProvider
         UpdateOrderStatus::register();
         AdjustStockAction::register();
 
-        Statamic::afterInstalled(function () {
-            foreach ($this->filesToPublish as $source => $target) {
-                if (File::exists($source) && ! File::exists($target)) {
-                    File::ensureDirectoryExists(dirname($target));
-                    File::copy($source, $target);
-                }
+        Statamic::afterInstalled(fn () => $this->publishCollections());
+    }
+
+    /**
+     * Gives a site the collections it does not have yet. A collection that already
+     * has its own file or blueprints is left as it is.
+     */
+    public function publishCollections(): void
+    {
+        $resources = __DIR__.'/../resources';
+
+        foreach ($this->collectionsToPublish as $collection => $blueprint) {
+            $collectionFile = base_path("content/collections/{$collection}.yaml");
+            $blueprints = base_path("resources/blueprints/collections/{$collection}");
+
+            if (File::exists($collectionFile) || File::isDirectory($blueprints)) {
+                continue;
             }
-        });
+
+            File::ensureDirectoryExists(dirname($collectionFile));
+            File::ensureDirectoryExists($blueprints);
+            File::copy("{$resources}/collections/{$collection}.yaml", $collectionFile);
+            File::copy("{$resources}/blueprints/{$blueprint}.yaml", "{$blueprints}/{$blueprint}.yaml");
+        }
     }
 }

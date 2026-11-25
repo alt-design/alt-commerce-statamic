@@ -1,4 +1,5 @@
 @extends('statamic::layout')
+@section('title', 'Alt Commerce')
 
 @section('content')
     <div>

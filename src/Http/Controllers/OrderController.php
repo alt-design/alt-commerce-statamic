@@ -109,9 +109,9 @@ class OrderController
         $order->customerEmail = $data['customer_email'];
         $order->billingAddress = new Address(
             company: $data['billing_company'] ?? null,
-            fullName: $data['billing_name'] ?? null,
+            fullName: $data['billing_full_name'] ?? null,
             countryCode: $data['billing_country_code'] ? (new ISO3166())->alpha3($data['billing_country_code'])['alpha2'] : null,
-            postalCode: $data['billing_postal_code'] ?? null,
+            postalCode: $data['billing_postcode'] ?? null,
             region: $data['billing_region'] ?? null,
             locality: $data['billing_locality'] ?? null,
             street: $data['billing_street'] ?? null,
@@ -159,9 +159,9 @@ class OrderController
             customer: $this->customerRepository->find($data['customer_id']) ?? throw new \Exception('Unable to find customer with id '.$data['customer_id']),
             billingAddress: new Address(
                 company: $data['billing_company'] ?? null,
-                fullName: $data['billing_name'] ?? null,
+                fullName: $data['billing_full_name'] ?? null,
                 countryCode: $data['billing_country_code'] ? (new ISO3166())->alpha3($data['billing_country_code'])['alpha2'] : null,
-                postalCode: $data['billing_postal_code'] ?? null,
+                postalCode: $data['billing_postcode'] ?? null,
                 region: $data['billing_region'] ?? null,
                 locality: $data['billing_locality'] ?? null,
                 street: $data['billing_street'] ?? null,

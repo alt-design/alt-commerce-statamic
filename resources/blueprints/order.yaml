@@ -1,0 +1,359 @@
+title: Order
+tabs:
+  general:
+    display: General
+    sections:
+      -
+        display: Details
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              visibility: hidden
+              validate:
+                - required
+          -
+            handle: order_number
+            field:
+              type: text
+              display: 'Order number'
+              width: 50
+              visibility: read_only
+          -
+            handle: order_status
+            field:
+              type: order_status
+              display: 'Order status'
+              width: 50
+              visibility: read_only
+          -
+            handle: customer_id
+            field:
+              type: users
+              max_items: 1
+              mode: typeahead
+              display: Customer
+              validate:
+                - required
+          -
+            handle: currency
+            field:
+              options:
+                - key: GBP
+                  value: GBP
+                - key: USD
+                  value: USD
+                - key: EUR
+                  value: EUR
+                - key: AUD
+                  value: AUD
+              searchable: false
+              type: select
+              display: Currency
+              width: 50
+              default: GBP
+              validate:
+                - required
+          -
+            handle: order_date
+            field:
+              type: date
+              display: Date
+              width: 50
+              validate:
+                - required
+              time_enabled: true
+              format: 'Y-m-d H:i:s'
+          -
+            handle: customer_name
+            field:
+              type: text
+              display: 'Customer name'
+              width: 50
+          -
+            handle: customer_email
+            field:
+              type: text
+              display: 'Customer email'
+              width: 50
+      -
+        display: 'Billing details'
+        fields:
+          -
+            handle: billing_company
+            field:
+              type: text
+              width: 33
+              display: Company
+          -
+            handle: billing_full_name
+            field:
+              type: text
+              width: 33
+              display: Name
+          -
+            handle: billing_phone_number
+            field:
+              type: text
+              width: 33
+              display: 'Phone number'
+          -
+            handle: billing_street
+            field:
+              type: text
+              width: 50
+              display: 'Street address'
+          -
+            handle: billing_locality
+            field:
+              type: text
+              width: 50
+              display: Locality
+          -
+            handle: billing_region
+            field:
+              type: text
+              width: 50
+              display: Region
+          -
+            handle: billing_postcode
+            field:
+              type: text
+              width: 50
+              display: 'Postal code'
+          -
+            handle: billing_country_code
+            field:
+              display: Country
+              type: dictionary
+              dictionary: countries
+              max_items: 1
+              validate: required
+              default: GBR
+              width: 50
+      -
+        display: 'Delivery address'
+        fields:
+          -
+            handle: shipping_company
+            field:
+              type: text
+              width: 33
+              display: Company
+          -
+            handle: shipping_full_name
+            field:
+              type: text
+              width: 33
+              display: Name
+          -
+            handle: shipping_phone_number
+            field:
+              type: text
+              width: 33
+              display: 'Phone number'
+          -
+            handle: shipping_street
+            field:
+              type: text
+              width: 50
+              display: 'Street address'
+          -
+            handle: shipping_locality
+            field:
+              type: text
+              width: 50
+              display: Locality
+          -
+            handle: shipping_region
+            field:
+              type: text
+              width: 50
+              display: Region
+          -
+            handle: shipping_postcode
+            field:
+              type: text
+              width: 50
+              display: 'Postal code'
+          -
+            handle: shipping_country_code
+            field:
+              display: Country
+              type: dictionary
+              dictionary: countries
+              max_items: 1
+              default: GBR
+              width: 50
+      -
+        display: Order
+        fields:
+          -
+            handle: items
+            field:
+              type: replicator
+              sets:
+                items:
+                  display: 'Items'
+                  sets:
+                    line_item:
+                      display: 'Line item'
+                      fields:
+                        -
+                          handle: product
+                          field:
+                            max_items: 1
+                            mode: typeahead
+                            collections:
+                              - products
+                            type: entries
+                            display: Product
+                        -
+                          handle: price
+                          field:
+                            type: money
+                            display: Price
+                            width: 33
+                        -
+                          handle: quantity
+                          field:
+                            type: integer
+                            display: Quantity
+                            width: 33
+                        -
+                          handle: subtotal
+                          field:
+                            type: money
+                            display: Subtotal
+                            width: 33
+                            visibility: read_only
+                        -
+                          handle: tax_auto
+                          field:
+                            default: true
+                            type: toggle
+                            display: 'Calculate tax'
+                            width: 25
+                        -
+                          handle: tax_name_manual
+                          field:
+                            type: text
+                            display: 'Tax name'
+                            width: 25
+                            if:
+                              tax_auto: 'equals false'
+                        -
+                          handle: tax_name
+                          field:
+                            type: text
+                            display: 'Tax name'
+                            width: 25
+                            visibility: read_only
+                            if:
+                              tax_auto: 'equals true'
+                        -
+                          handle: tax_rate
+                          field:
+                            type: float
+                            display: 'Tax rate (%)'
+                            width: 25
+                            visibility: read_only
+                            if:
+                              tax_auto: 'equals true'
+                        -
+                          handle: tax_amount
+                          field:
+                            type: money
+                            display: 'Tax amount'
+                            width: 25
+                            visibility: read_only
+                            if:
+                              tax_auto: 'equals true'
+                        -
+                          handle: tax_rate_manual
+                          field:
+                            type: float
+                            display: 'Tax rate (%)'
+                            if:
+                              tax_auto: 'equals false'
+                            width: 25
+                        -
+                          handle: tax_amount_manual
+                          field:
+                            type: money
+                            display: 'Tax amount'
+                            width: 25
+                            if:
+                              tax_auto: 'equals false'
+                        -
+                          handle: options
+                          field:
+                            type: array
+                            display: Options
+                            visibility: read_only
+                    discount_item:
+                      display: 'Discount item'
+                      fields:
+                        -
+                          handle: discount_name
+                          field:
+                            type: text
+                            display: Name
+                            width: 50
+                        -
+                          handle: discount_amount
+                          field:
+                            type: money
+                            display: Amount
+                            width: 50
+          -
+            handle: coupon_code
+            field:
+              type: text
+              display: 'Coupon Code'
+              instructions: 'Changing this revalidates the coupon and recalculates totals.'
+              width: 25
+          -
+            handle: discount_total
+            field:
+              type: money
+              display: Discount
+              width: 25
+              visibility: read_only
+          -
+            handle: sub_total
+            field:
+              type: money
+              display: Subtotal
+              width: 25
+              visibility: read_only
+          -
+            handle: tax_total
+            field:
+              type: money
+              display: Tax
+              width: 25
+              visibility: read_only
+          -
+            handle: delivery_total
+            field:
+              type: money
+              display: Delivery
+              width: 25
+              visibility: read_only
+          -
+            handle: total
+            field:
+              type: money
+              display: Total
+              width: 25
+              visibility: read_only
+          -
+            handle: payment_method
+            field:
+              type: text
+              display: 'Payment method'
+              width: 50
+              visibility: read_only

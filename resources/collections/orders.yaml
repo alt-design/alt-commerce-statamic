@@ -1,0 +1,5 @@
+title: Orders
+revisions: false
+slugs: false
+sort_by: order_date
+sort_dir: desc
